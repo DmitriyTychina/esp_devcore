@@ -3,7 +3,7 @@
 #include <Arduino.h>
 #include "RSDebug.h"
 
-#define RSDebug_TtaskDefault 249
+#define RSDebug_TtaskDefault 19
 
 extern RSDebug Debug;
 

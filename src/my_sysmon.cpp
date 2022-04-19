@@ -20,7 +20,8 @@ void cb_sysmon(void)
   uint32_t freeRAM = ESP.getFreeHeap();
 
   e_IDDirTopic dir_topic[] = {_main_topic, _Info, _SysMon, _empty};
-  rsdebugInfln("Free memory: %u", freeRAM);
+  rsdebugInfln("FreeRAM: %u", freeRAM);
+  rsdebugInfln("FreeSketchSpace: %u", ESP.getFreeSketchSpace());
   mqtt_publish(dir_topic, _FreeRAM, freeRAM);
   unsigned long cpuTot = ut_sysmon.getCpuLoadTotal();
   float CPUload = (float)ut_sysmon.getCpuLoadCycle() / (float)cpuTot * 100;

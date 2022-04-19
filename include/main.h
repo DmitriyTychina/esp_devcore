@@ -18,9 +18,10 @@
 #include "my_door.h"
 // USER_AREA_END****!!!!@@@@####$$$$%%%%^^^^
 #endif // USER_AREA
+String get_glob_reason(bool wait);
 
 // Глобальные переменные для постоянного хранения в памяти
-extern uint8 glob_reason;        // причина сброса
+// extern uint8 glob_reason;        // причина сброса
 extern uint16_t wifi_count_conn; // количество (пере)подключений к WiFi
 
 extern uTask ut_wifi;
@@ -287,4 +288,4 @@ extern u_combi_state_WiFi u; // Состояние WIFi
 //         logln1("MQTT_enable");                \
 //     }*/
 
-#endif //main_h
+#endif // main_h

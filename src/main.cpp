@@ -11,7 +11,51 @@
 #include "main.h"
 
 // Глобальные переменные для постоянного хранения в памяти
-uint8 glob_reason;
+// uint8 glob_reason;
+String get_glob_reason(bool _wait)
+{
+  //     REASON_DEFAULT_RST = 0,      /* включение питания */
+  //     REASON_WDT_RST = 1,          /* аппаратный сброс по WDT */
+  //     REASON_EXCEPTION_RST = 2,    /* сброс по исключению, GPIO не изменяются */
+  //     REASON_SOFT_WDT_RST = 3,     /* программный сброс по WDT, GPIO не изменяются */
+  //     REASON_SOFT_RESTART = 4,     /* программный сброс , GPIO не изменяются */
+  //     REASON_DEEP_SLEEP_AWAKE = 5, /* выход из глубокого сна */
+  //     REASON_EXT_SYS_RST = 6       /* аппаратный сброс */
+  rst_info *p_rst_info;
+  p_rst_info = system_get_rst_info(); // причина сброса
+  uint8 glob_reason = p_rst_info->reason;
+  if (_wait & (glob_reason != REASON_DEFAULT_RST) & (glob_reason != REASON_EXT_SYS_RST) & (glob_reason != REASON_SOFT_RESTART /* после прошивки OTA */))
+    os_delay_us(500000); // чтобы при "непонятных" сбросах данные не мелькали в serial-порту
+  String tmp_str;
+  switch (glob_reason)
+  {
+  case REASON_DEFAULT_RST:
+    tmp_str = F("[0]PowerOn");
+    break;
+  case REASON_WDT_RST:
+    tmp_str = F("[1]HardWDT");
+    break;
+  case REASON_EXCEPTION_RST:
+    tmp_str = F("[2]Exception");
+    break;
+  case REASON_SOFT_WDT_RST:
+    tmp_str = F("[3]SoftWDT");
+    break;
+  case REASON_SOFT_RESTART:
+    tmp_str = F("[4]OTA");
+    break;
+  case REASON_DEEP_SLEEP_AWAKE:
+    tmp_str = F("[5]DeepSleepAwake");
+    break;
+  case REASON_EXT_SYS_RST:
+    tmp_str = F("[6]HardReset");
+    break;
+  default:
+    tmp_str = F("Unknown");
+  }
+  return (tmp_str);
+}
+
 s_sys_settings_ROM *g_p_sys_settings_ROM = NULL;
 
 // Экземпляры классов
@@ -47,24 +91,15 @@ uTask ut_MQTT(MQTT_TtaskDefault, &t_MQTT_cb); // MQTT
 
 void setup()
 {
-  //     REASON_DEFAULT_RST = 0,      /* включение питания */
-  //     REASON_WDT_RST = 1,          /* аппаратный сброс по WDT */
-  //     REASON_EXCEPTION_RST = 2,    /* сброс по исключению, GPIO не изменяются */
-  //     REASON_SOFT_WDT_RST = 3,     /* программный сброс по WDT, GPIO не изменяются */
-  //     REASON_SOFT_RESTART = 4,     /* программный сброс , GPIO не изменяются */
-  //     REASON_DEEP_SLEEP_AWAKE = 5, /* выход из глубокого сна */
-  //     REASON_EXT_SYS_RST = 6       /* аппаратный сброс */
-  rst_info *p_rst_info;
-  p_rst_info = system_get_rst_info(); // причина сброса
-  glob_reason = p_rst_info->reason;
-  if ((glob_reason != REASON_DEFAULT_RST) & (glob_reason != REASON_EXT_SYS_RST) & (glob_reason != REASON_SOFT_RESTART /* после прошивки OTA */))
-    os_delay_us(500000); // чтобы при "непонятных" сбросах данные не мелькали в serial-порту
   // Serial.begin(74880); // родная скорость ESP
   // Serial1.begin(115200);
   // Serial.begin(115200); // для RS485 к STM
   // Serial.swap(); // для RS485 к STM
   init_sdebuglog(true);
   rsdebugInflnF("\r********************Start********************");
+  rsdebugInfF("Причина сброса: ");
+  rsdebugInfln("%s", get_glob_reason(true).c_str());
+  // rsdebugInfln("Причина сброса: %s", get_glob_reason(true).c_str());
   rsdebugInflnF("***Проверка сохраненных настроек***");
   ROMVerifySettingsElseSaveDefault();
   // optimistic_Core(2000000);
@@ -72,6 +107,7 @@ void setup()
   SysMon_Init();
   rsdebugInflnF("SysMon");
   init_sdebuglog();
+  rsdebugInflnF("RSdebug");
 
 #ifdef USER_AREA
   // ****!!!!@@@@####$$$$%%%%^^^^USER_AREA_BEGIN
@@ -80,36 +116,6 @@ void setup()
   rsdebugInflnF("Door");
 // USER_AREA_END****!!!!@@@@####$$$$%%%%^^^^
 #endif // USER_AREA
-
-  String tmp_str1, tmp_str2;
-  tmp_str1 = F("Причина сброса: ");
-  switch (glob_reason)
-  {
-  case REASON_DEFAULT_RST:
-    tmp_str2 = F("включение питания");
-    break;
-  case REASON_WDT_RST:
-    tmp_str2 = F("аппаратный сброс по WDT");
-    break;
-  case REASON_EXCEPTION_RST:
-    tmp_str2 = F("сброс по исключению, GPIO не изменяются");
-    break;
-  case REASON_SOFT_WDT_RST:
-    tmp_str2 = F("программный сброс по WDT, GPIO не изменяются");
-    break;
-  case REASON_SOFT_RESTART:
-    tmp_str2 = F("программный сброс (после OTA), GPIO не изменяются");
-    break;
-  case REASON_DEEP_SLEEP_AWAKE:
-    tmp_str2 = F("выход из глубокого сна");
-    break;
-  case REASON_EXT_SYS_RST:
-    tmp_str2 = F("аппаратный сброс");
-    break;
-  default:
-    tmp_str2 = F("???");
-  }
-  rsdebugInfln(("%s%s"), tmp_str1.c_str(), tmp_str2.c_str());
 
   init_WiFi();
   rsdebugInflnF("WiFi");
@@ -131,9 +137,12 @@ void loop()
   ut_sysmon.StopStopwatchCore();
 
   ut_OTA.execute();
-  ut_NTP.execute();
-  ut_MQTT.execute();
   ut_wifi.execute();
+  // ut_OTA.execute();
+  ut_NTP.execute();
+  // ut_OTA.execute();
+  ut_MQTT.execute();
+  // ut_OTA.execute();
 
 #ifdef USER_AREA
   // ****!!!!@@@@####$$$$%%%%^^^^USER_AREA_BEGIN
@@ -144,10 +153,13 @@ void loop()
 // USER_AREA_END****!!!!@@@@####$$$$%%%%^^^^
 #endif // USER_AREA
 
+  // ut_OTA.execute();
   ut_debuglog.execute();
+  // ut_OTA.execute();
   ut_emptymemory.execute();
+  // ut_OTA.execute();
   if (ut_sysmon.execute()) // должна быть последняя в loop()
     ut_sysmon.cpuLoadReset();
-    
+
   ut_sysmon.StartStopwatchCore();
 }

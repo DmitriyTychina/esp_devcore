@@ -20,7 +20,8 @@ void init_OTA(void)
 					   {
 		rsdebugnflnF("*OTA: Start");
 		// ut_wifi.setInterval(5);
-		ut_OTA.setInterval(1); });
+		ut_OTA.setInterval(1); 
+		});
 	ArduinoOTA.onEnd([]()
 					 { rsdebugnflnF("\n\r*OTA: End"); });
 	ArduinoOTA.onProgress([](unsigned int progress, unsigned int total)

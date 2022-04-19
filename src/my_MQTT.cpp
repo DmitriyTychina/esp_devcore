@@ -101,7 +101,7 @@ void onStartMQTT(void)
   // только после сброса
   if (wifi_count_conn == 1)
   {
-    mqtt_publish(dir_topic, _ReasonReset, (uint32_t)glob_reason);
+    mqtt_publish(dir_topic, _ReasonReset, get_glob_reason(false).c_str());
     dir_topic[1] = _Settings;
     mqtt_publish_no(dir_topic, _Default);
     mqtt_publish_no(dir_topic, _Read);

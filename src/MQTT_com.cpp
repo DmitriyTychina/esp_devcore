@@ -221,8 +221,8 @@ void MQTT_com_Settings(s_element_Queue_MQTT _element)
                 LoadInMemorySettingsSys();
                 if (!strcmp(arr_dir[3], ArrVarTopic[_T_task]))
                 {
-                    if (Modify_task_tTask(dir_topic, payload, &ut_OTA, 1, 5000, &g_p_sys_settings_ROM->OTA_Ttask))
-                        NeedSaveSettings.bit.OTA = true;
+                    // if (Modify_task_tTask(dir_topic, payload, &ut_OTA, 1, 5000, &g_p_sys_settings_ROM->OTA_Ttask))
+                    //     NeedSaveSettings.bit.OTA = true;
                 }
                 // EmptyMemorySettingsSys();
             }

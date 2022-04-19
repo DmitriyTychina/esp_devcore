@@ -22,9 +22,9 @@ uint8_t akk_k = 0;
 
 inline void dependent_tasks_enable() // WiFi:Запускаем зависимые задачи
 {
-    init_rdebuglog();
     rsdebugnflnF("WiFi connected: Запускаем зависимые задачи");
-    // rsdebugInflnF("--RSDebuglog enable");
+    rsdebugInflnF("--RDebuglog enable");
+    init_rdebuglog();
     rsdebugInflnF("--OTA enable");
     ut_OTA.enable(); // всегда работает когда есть WiFi
     rsdebugInflnF("--NTP enable");
@@ -43,8 +43,8 @@ inline void dependent_tasks_disable() // WiFi:Останавливаем зав�
     ut_NTP.disable();
     rsdebugInflnF("--OTA disable");
     ut_OTA.disable();
-
-    // rsdebugInflnF("--RSDebuglog disable");
+    rsdebugInflnF("--RSDebuglog disable");
+    ut_debuglog.disable();
 }
 
 /* ------------------------------------------------- */
