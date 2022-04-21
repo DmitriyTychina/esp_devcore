@@ -29,29 +29,32 @@ struct s_sys_settings_ROM
 struct s_all_settings_ROM
 {
     uint16_t crc;
+    // uint16_t len;
+    // s_ethernet_settings_ROM ethernet_settings_ROM1;
     s_ethernet_settings_ROM ethernet_settings_ROM;
     s_NTP_settings_ROM NTP_settings_ROM;
+    // s_sys_settings_ROM sys_settings_ROM1;
     s_sys_settings_ROM sys_settings_ROM;
+    // uint16_t crc3=1;
+    // uint16_t crc2=0;
     // s_NTC_settings_ROM NTC_settings_ROM;
-    uint16_t crc2;
-    // uint16_t crc3;
 };
 
-// extern s_all_settings_ROM *s1;
+extern s_all_settings_ROM *s1;
 extern s_sys_settings_ROM *g_p_sys_settings_ROM;
 
-// соблюдаем порядок вычисления адреса
-#define addr_all_settings_ROM 0
+// соблюдаем порядок вычисления адреса - не нужно
+// #define addr_all_settings_ROM 0
 #define len_all_settings_ROM sizeof(*s1) // всегда первая CRC
 #define len_crc sizeof(s1->crc)
 
 // #define addr_ethernet_settings_ROM (addr_all_settings_ROM+len_crc) // первая после CRC
-#define addr_ethernet_settings_ROM ((char *)&s1->ethernet_settings_ROM - (char *)s1) // первая после CRC
+#define addr_ethernet_settings_ROM ((uint8_t *)&s1->ethernet_settings_ROM - (uint8_t *)s1) // первая после CRC
 // #define len_ethernet_settings_ROM ((char*)&s1->NTP_settings_ROM-(char*)&s1->ethernet_settings_ROM)
 #define len_ethernet_settings_ROM sizeof(s1->ethernet_settings_ROM)
 
 // #define addr_NTP_settings_ROM (addr_ethernet_settings_ROM + len_ethernet_settings_ROM) // такая запись давала адрес на 2 байта меньше (???)
-#define addr_NTP_settings_ROM ((char *)&s1->NTP_settings_ROM - (char *)s1) // только такая запись давала реальный адрес
+#define addr_NTP_settings_ROM ((uint8_t *)&s1->NTP_settings_ROM - (uint8_t *)s1) // только такая запись давала реальный адрес
 #define len_NTP_settings_ROM sizeof(s1->NTP_settings_ROM)
 
 // // #define addr_NTC_settings_ROM (addr_NTP_settings_ROM + len_NTP_settings_ROM)
@@ -59,7 +62,7 @@ extern s_sys_settings_ROM *g_p_sys_settings_ROM;
 // #define len_NTC_settings_ROM sizeof(s1->NTC_settings_ROM)
 
 // // #define addr_sys_settings_ROM (addr_NTC_settings_ROM + len_NTC_settings_ROM)
-#define addr_sys_settings_ROM ((char *)&s1->sys_settings_ROM - (char *)s1)
+#define addr_sys_settings_ROM ((uint8_t *)&s1->sys_settings_ROM - (uint8_t *)s1)
 #define len_sys_settings_ROM sizeof(s1->sys_settings_ROM)
 
 // void Print_s_NTP_settings(s_NTP_settings_ROM *_s);
@@ -67,16 +70,16 @@ extern s_sys_settings_ROM *g_p_sys_settings_ROM;
 void ROMVerifySettingsElseSaveDefault(bool force = false);
 void all_settings_Default(s_all_settings_ROM *__p_all_settings_ROM);
 
-void GetSettings(void **_p_settings_ROM, uint16_t addr, uint16_t len);
-void EmptySettings(void **_p_settings_ROM);
+// void GetSettings(void *_p_settings_ROM, uint16_t addr, uint16_t len);
+// void EmptySettings(void *_p_settings_ROM);
 
-void LoadInMemorySettingsSys();
+// void LoadInMemorySettingsSys();
 void EmptyMemorySettingsSys(bool force = false);
 
-void LoadInMemorySettingsEthernet();
+// void LoadInMemorySettingsEthernet();
 void EmptyMemorySettingsEthernet(bool force = false);
 
-void LoadInMemorySettingsNTP();
+// void LoadInMemorySettingsNTP();
 void EmptyMemorySettingsNTP(bool force = false);
 
 // void LoadInMemorySettingsNTC();
@@ -84,22 +87,27 @@ void EmptyMemorySettingsNTP(bool force = false);
 
 void SaveAllSettings(void);
 void NotSaveEmptyMemorySettings(void);
+void LoadInMemorySettings(char *_name, void **p_MemorySettings, uint16_t _addr, uint16_t _size);
 
-#define GetSettingsEthernet(data) GetSettings((void **)data, addr_ethernet_settings_ROM, len_ethernet_settings_ROM)
+#define LoadInMemorySettingsSys() LoadInMemorySettings("Sys", (void **)&g_p_sys_settings_ROM, addr_sys_settings_ROM, len_sys_settings_ROM)
+#define LoadInMemorySettingsEthernet() LoadInMemorySettings("связи", (void **)&g_p_ethernet_settings_ROM, addr_ethernet_settings_ROM, len_ethernet_settings_ROM)
+#define LoadInMemorySettingsNTP() LoadInMemorySettings("NTP", (void **)&g_p_NTP_settings_ROM, addr_NTP_settings_ROM, len_NTP_settings_ROM)
+
+// #define GetSettingsSys(data) GetSettings((void **)data, addr_sys_settings_ROM, len_sys_settings_ROM)
+// #define EmptySettingsSys(data) toolEmptySettings((void **)data)
+
+// #define GetSettingsEthernet(data) GetSettings((void **)data, addr_ethernet_settings_ROM, len_ethernet_settings_ROM)
 // #define EmptySettingsEthernet(data) toolEmptySettings((void **)data)
 
-#define GetSettingsNTP(data) GetSettings((void **)data, addr_NTP_settings_ROM, len_NTP_settings_ROM)
+// #define GetSettingsNTP(data) GetSettings((void **)data, len_NTP_settings_ROM)
 // #define EmptySettingsNTP(data) toolEmptySettings((void **)data)
 
 // #define GetSettingsNTC(data) GetSettings((void **)data, addr_NTC_settings_ROM, len_NTC_settings_ROM)
 // #define EmptySettingsNTC(data) EmptySettings((void **)data)
 
-#define GetSettingsSys(data) GetSettings((void **)data, addr_sys_settings_ROM, len_sys_settings_ROM)
-// #define EmptySettingsSys(data) toolEmptySettings((void **)data)
-
 uint16_t CRC16(void *pData, uint16_t nCount);
 // void readROM(void *p_struct, uint16_t addr, uint16_t len);
-void get_p_all_settings_ROM(s_all_settings_ROM *_p_all_settings_ROM);
+// void get_p_all_settings_ROM(s_all_settings_ROM *_p_all_settings_ROM);
 bool compareCRC(void *p_struct, uint16_t len);
 void calcCRC(void *p_struct, uint16_t len);
 // void writeROM(void *p_struct, uint16_t addr, uint16_t len);
@@ -119,7 +127,7 @@ union u_NeedSaveSettings
     } bit;
 };
 
-void cb_emptymemory(void);
+void cb_ut_emptymemory(void);
 
 // extern bool NeedSaveSettings_NTP;
 extern u_NeedSaveSettings NeedSaveSettings;

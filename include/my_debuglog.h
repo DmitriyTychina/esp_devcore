@@ -3,13 +3,13 @@
 #include <Arduino.h>
 #include "RSDebug.h"
 
-#define RSDebug_TtaskDefault 19
+#define RSDebug_TtaskDefault 41
 
 extern RSDebug Debug;
 
 void init_sdebuglog(bool force = false);
 void init_rdebuglog();
-void cb_my_debuglog();
+void cb_ut_debuglog();
 
 inline void my_debuglog_print_free_memory()
 {

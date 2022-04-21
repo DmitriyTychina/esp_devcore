@@ -167,7 +167,7 @@ void latch_start(void)
 }
 #endif
 
-void cb_door(void)
+void cb_ut_door(void)
 {
   bool current_state_door = digitalRead(statedoor_pin);
   if (state_door != current_state_door) // изменилось состояние двери
@@ -182,10 +182,10 @@ void cb_door(void)
 #endif
 }
 
-void MQTT_com_Door(s_element_Queue_MQTT _element) // получили команду на открытие замка
+void cb_MQTT_com_Door(s_element_MQTT _element) // получили команду на открытие замка
 {
-  const char *payload = _element.payload->c_str();
-  if (is_equal_enable(payload)) // открыть дверь
+  // const char *payload = _element.payload;
+  if (is_equal_enable(_element.payload)) // открыть дверь
   {
     // rsdebugDnfln("--->latch_execute(true)");
 #ifdef LATCH_STATE_MACHINE
@@ -194,7 +194,7 @@ void MQTT_com_Door(s_element_Queue_MQTT _element) // получили коман
 #else
     latch_start();
 #endif
-    mqtt_publish(_element.topic->c_str(), "ok");
+    mqtt_publish(_element.topic, "ok");
   }
 }
 

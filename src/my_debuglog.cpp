@@ -61,7 +61,7 @@ void init_rdebuglog()
     }
 }
 
-void cb_my_debuglog()
+void cb_ut_debuglog()
 {
     Debug.handle();
 }

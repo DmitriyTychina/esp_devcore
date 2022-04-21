@@ -42,11 +42,11 @@ extern uTask ut_door;
 #endif // USER_AREA
 
 #include "my_MQTT.h"
-extern e_state_MQTT state_MQTT;  // Состояние подключения к MQTT
+extern e_state_MQTT MQTT_state;  // Состояние подключения к MQTT
 extern uint16_t mqtt_count_conn; // количество (пере)подключений к серверу mqtt
 
 #include "my_wifi.h"
-extern u_combi_state_WiFi u; // Состояние WIFi
+extern e_state_WiFi wifi_state; // Состояние WIFi
 
 // // enum e_microprogramm
 // // {
@@ -110,7 +110,7 @@ extern u_combi_state_WiFi u; // Состояние WIFi
 //     s_wifi_serv wifi_serv = {WIFI_SSID1, WIFI_PASS1, IPmqttWIFI1, mqtt_user, mqtt_pass};
 //     // uint8_t nowIP[4];         // Tекущий IP - это в RAM
 //     // e_state_internet state_NTP; // Состояние NTP
-//     // e_state_MQTT state_MQTT;    // Состояние MQTT
+//     // e_state_MQTT MQTT_state;    // Состояние MQTT
 //     // e_state_ESP state_ESP;      // Состояние ESP
 //     // e_state_STM state_STM;      // Состояние STM32
 //     // nowtime;            // Текущее местное время // здесь, или в sys?
@@ -136,7 +136,7 @@ extern u_combi_state_WiFi u; // Состояние WIFi
 //     // e_state_ex state_ex;        // Исключительные случаи
 //     // e_state_WiFi state_WiFi; // Состояние WIFi
 //     // // e_state_internet state_NTP; // Состояние NTP
-//     // // e_state_MQTT state_MQTT;    // Состояние MQTT
+//     // // e_state_MQTT MQTT_state;    // Состояние MQTT
 //     // // e_state_ESP state_ESP;      // Состояние ESP
 //     // // e_state_STM state_STM;      // Состояние STM32
 //     // reason_time; // Время сброса
@@ -262,30 +262,5 @@ extern u_combi_state_WiFi u; // Состояние WIFi
 //     int v_cntr_out;         // текущий расход воды из бочки
 //     long v_summ_out;        // слито воды из бочки
 // } s_voda;
-
-// extern s_all_param_RAM all_param_RAM;
-
-/*// #define ota_disable            \
-//     {                          \
-//         t_OTA.disable();       \
-//         logln1("ota_disable"); \
-//     }
-// #define ota_enable            \
-//     {                         \
-//         t_OTA.enable();       \
-//         logln1("ota_enable"); \
-//     }
-
-// #define mqtt_disable            \
-//     {                           \
-//         t_MQTT.disable();       \
-//         logln1("MQTT_disable"); \
-//     }
-// #define mqtt_enable                           \
-//     {                                         \
-//         mqtt_init(&all_param_RAM.conn_param); \
-//         t_MQTT.enable();                      \
-//         logln1("MQTT_enable");                \
-//     }*/
 
 #endif // main_h

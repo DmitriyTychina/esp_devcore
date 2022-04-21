@@ -24,8 +24,8 @@
 void door_init(void);
 void refresh_state_door(bool _state_door = digitalRead(statedoor_pin));
 void latch_execute(void);
-void cb_door(void);
-void MQTT_com_Door(s_element_Queue_MQTT _element);
+void cb_ut_door(void);
+void cb_MQTT_com_Door(s_element_MQTT _element);
 void onStartMQTT_pub_door(void);
 
 #endif // my_door_h

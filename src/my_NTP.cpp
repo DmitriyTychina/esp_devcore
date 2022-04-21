@@ -109,7 +109,7 @@ void init_NTP_with_WiFi(void)
 	// 	EmptyMemorySettingsNTP();
 }
 
-void t_NTP_cb(void)
+void cb_ut_NTP(void)
 {
 	if (syncEventTriggered)
 	{

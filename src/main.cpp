@@ -68,26 +68,26 @@ volatile unsigned long uTask::iCPUCore = 0;
 volatile unsigned long uTask::iCPUTT = 0;
 
 // ****************** Независимые задачи
-uTask ut_wifi(WiFi_TtaskDefault, &cb_state_wifi);         // Подключение к wifi
-uTask ut_sysmon(SysMon_TtaskDefault, &cb_sysmon);         // sysmon
-uTask ut_debuglog(RSDebug_TtaskDefault, &cb_my_debuglog); // RSDedug
-uTask ut_emptymemory(emptymemory_TtaskDefault, &cb_emptymemory, true);
+uTask ut_wifi(WiFi_TtaskDefault, &cb_ut_state_wifi);      // Подключение к wifi
+uTask ut_sysmon(SysMon_TtaskDefault, &cb_ut_sysmon);      // sysmon
+uTask ut_debuglog(RSDebug_TtaskDefault, &cb_ut_debuglog); // RSDedug
+uTask ut_emptymemory(emptymemory_TtaskDefault, &cb_ut_emptymemory, true); // автоматически очищаем память
 
 #ifdef USER_AREA
 // ****!!!!@@@@####$$$$%%%%^^^^USER_AREA_BEGIN
 // задачи
 // ****************** Задача опроса датчиков
 // uTask ut_NTC(NTC_TtaskDefault, &cb_NTC, true); // NTC - датчик температуры
-uTask ut_door(door_TtaskDefault, &cb_door, true);
+uTask ut_door(door_TtaskDefault, &cb_ut_door, true);
 // ****************** Отработка алгоритмов и управление
 // uTask ut_math(Math_TtaskDefault, &cb_math, true); // математика и алгоритмы
 // USER_AREA_END****!!!!@@@@####$$$$%%%%^^^^
 #endif // USER_AREA
 
 // ****************** Зависящие от подключения к wifi
-uTask ut_OTA(OTA_TtaskDefault, &t_ota_cb);    // OTA
-uTask ut_NTP(NTP_TtaskDefault, &t_NTP_cb);    // time NTP
-uTask ut_MQTT(MQTT_TtaskDefault, &t_MQTT_cb); // MQTT
+uTask ut_OTA(OTA_TtaskDefault, &cb_ut_ota);    // OTA
+uTask ut_NTP(NTP_TtaskDefault, &cb_ut_NTP);    // time NTP
+uTask ut_MQTT(MQTT_TtaskDefault, &cb_ut_MQTT); // MQTT
 
 void setup()
 {
@@ -134,14 +134,20 @@ void setup()
 
 void loop()
 {
+  // rsdebugInflnF("#0");
   ut_sysmon.StopStopwatchCore();
+  // rsdebugInflnF("#1");
 
   ut_OTA.execute();
+  // rsdebugInflnF("#2");
   ut_wifi.execute();
-  // ut_OTA.execute();
-  ut_NTP.execute();
+  // rsdebugInflnF("#3");
   // ut_OTA.execute();
   ut_MQTT.execute();
+  // rsdebugInflnF("#4");
+  // ut_OTA.execute();
+  ut_NTP.execute();
+  // rsdebugInflnF("#5");
   // ut_OTA.execute();
 
 #ifdef USER_AREA
@@ -150,16 +156,21 @@ void loop()
   // ut_NTC.execute();
   // ut_math.execute();
   ut_door.execute();
+  // rsdebugInflnF("#6");
 // USER_AREA_END****!!!!@@@@####$$$$%%%%^^^^
 #endif // USER_AREA
 
   // ut_OTA.execute();
   ut_debuglog.execute();
+  // rsdebugInflnF("#7");
   // ut_OTA.execute();
   ut_emptymemory.execute();
+  // rsdebugInflnF("#8");
   // ut_OTA.execute();
   if (ut_sysmon.execute()) // должна быть последняя в loop()
     ut_sysmon.cpuLoadReset();
+  // rsdebugInflnF("#9");
 
   ut_sysmon.StartStopwatchCore();
+  // rsdebugInflnF("#10");
 }

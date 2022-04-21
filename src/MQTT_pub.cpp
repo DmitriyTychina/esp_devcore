@@ -15,7 +15,7 @@ void MQTT_pub_allSettings(bool fromROMorDefault)
     rsdebugInflnF("Публикуем данные из ROM")
   else
     rsdebugInflnF("Публикуем данные по умолчанию")
-  e_IDDirTopic dir_topic[] = {_main_topic, _Settings, _empty, _empty};
+  e_IDDirTopic dir_topic[] = {_main_topic, _Settings, d_empty, d_empty};
 
   s_ethernet_settings_ROM *p_ethernet_settings;
   if(fromROMorDefault)
@@ -27,11 +27,11 @@ void MQTT_pub_allSettings(bool fromROMorDefault)
   {
     p_ethernet_settings = &def_all_settings_ROM.ethernet_settings_ROM;
   }
-  dir_topic[2] = _MQTT; // {_main_topic, _Settings, _MQTT, _empty}
+  dir_topic[2] = _MQTT; // {_main_topic, _Settings, _MQTT, d_empty}
   mqtt_publish(dir_topic, _USER, "*****" /* p_ethernet_settings->MQTT_login */);
   mqtt_publish(dir_topic, _PASS, "*****" /* p_ethernet_settings->MQTT_pass */);
   mqtt_publish(dir_topic, _T_task, p_ethernet_settings->MQTT_Ttask);
-  dir_topic[2] = _WIFI; // {_main_topic, _Settings, _WIFI, _empty}
+  dir_topic[2] = _WIFI; // {_main_topic, _Settings, _WIFI, d_empty}
   mqtt_publish(dir_topic, _T_task, p_ethernet_settings->WiFi_Ttask);
   e_IDDirTopic a_dirs[] = {_AP1, _AP2, _AP3, _AP4, _AP5};
   for (uint8_t w = 0; w < (sizeof(a_dirs) / sizeof(a_dirs[0])); w++)
@@ -42,7 +42,7 @@ void MQTT_pub_allSettings(bool fromROMorDefault)
     mqtt_publish(dir_topic, _IP_serv, p_ethernet_settings->settings_serv[w].MQTTip);
     // rsdebugInfln("IP_MQTT_com0:%s[%d]", p_ethernet_settings->settings_serv[w].MQTTip, w);
   }
-  dir_topic[3] = _empty; // {_main_topic, _Settings, _WIFI, _empty}
+  dir_topic[3] = d_empty; // {_main_topic, _Settings, _WIFI, d_empty}
   // EmptyMemorySettingsEthernet(true);
 
   s_sys_settings_ROM *p_sys_settings;
@@ -55,17 +55,17 @@ void MQTT_pub_allSettings(bool fromROMorDefault)
   {
     p_sys_settings = &def_all_settings_ROM.sys_settings_ROM;
   }
-  dir_topic[2] = _RSdebug; // {_main_topic, _Settings, _RSdebug, _empty}
+  dir_topic[2] = _RSdebug; // {_main_topic, _Settings, _RSdebug, d_empty}
   mqtt_publish(dir_topic, _T_task, p_sys_settings->RSDebug_Ttask);
   dir_topic[3] = _Sdebug; // {_main_topic, _Settings, _Settings, _RSdebug, _Sdebug}
   mqtt_publish(dir_topic, _Enable, p_sys_settings->RSDebug_SDebug /* ? "yes" : "no"*/);
   dir_topic[3] = _Rdebug; // {_main_topic, _Settings, _RSdebug, _Rdebug}
   mqtt_publish(dir_topic, _Enable, p_sys_settings->RSDebug_RDebug /* ? "yes" : "no"*/);
-  dir_topic[3] = _empty;  // {_main_topic, _Settings, _RSdebug, _empty}
-  dir_topic[2] = _SysMon; // {_main_topic, _Settings, _SysMon, _empty}
+  dir_topic[3] = d_empty;  // {_main_topic, _Settings, _RSdebug, d_empty}
+  dir_topic[2] = _SysMon; // {_main_topic, _Settings, _SysMon, d_empty}
   mqtt_publish(dir_topic, _T_task, p_sys_settings->SysMon_Ttask);
   // mqtt_publish(dir_topic, _Enable, p_sys_settings->SysMon_Ttask != 0 /* ? "yes" : "no"*/);
-  dir_topic[2] = _OTA; // {_main_topic, _Settings, _OTA, _empty}
+  dir_topic[2] = _OTA; // {_main_topic, _Settings, _OTA, d_empty}
   mqtt_publish(dir_topic, _T_task, p_sys_settings->OTA_Ttask);
   // EmptyMemorySettingsSys(true);
 
@@ -79,7 +79,7 @@ void MQTT_pub_allSettings(bool fromROMorDefault)
   {
     p_NTP_settings = &def_all_settings_ROM.NTP_settings_ROM;
   }
-  dir_topic[2] = _NTP; // {_main_topic, _Settings, _NTP, _empty}
+  dir_topic[2] = _NTP; // {_main_topic, _Settings, _NTP, d_empty}
   mqtt_publish(dir_topic, _T_task, p_NTP_settings->Ttask);
   // mqtt_publish(dir_topic, _Enable, p_NTP_settings->Ttask /* ? "yes" : "no"*/);
   mqtt_publish(dir_topic, _Tsync, p_NTP_settings->T_syncNTP);
@@ -119,19 +119,19 @@ void MQTT_pub_allSettings(bool fromROMorDefault)
 
 // void MQTT_pub_Commands_ok(e_IDVarTopic _IDVarTopic)
 // {
-//   e_IDDirTopic dir_topic[] = {_main_topic, _Commands, _empty, _empty};
+//   e_IDDirTopic dir_topic[] = {_main_topic, _Commands, d_empty, d_empty};
 //   // mqtt_publish(dir_topic, _IDVarTopic, "ok");
 //   mqtt_publish_ok(dir_topic, _IDVarTopic);
 // }
 
 // void MQTT_pub_Settings_ok(e_IDVarTopic _IDVarTopic)
 // {
-//   e_IDDirTopic dir_topic[] = {_main_topic, _Settings, _empty, _empty};
+//   e_IDDirTopic dir_topic[] = {_main_topic, _Settings, d_empty, d_empty};
 //   mqtt_publish(dir_topic, _IDVarTopic, "ok");
 // }
 
 void MQTT_pub_Info_TimeReset(void)
 {
-  e_IDDirTopic dir_topic[] = {_main_topic, _Info, _empty, _empty};
+  e_IDDirTopic dir_topic[] = {_main_topic, _Info, d_empty, d_empty};
   mqtt_publish(dir_topic, _TimeReset, NTP.getTimeDateString(NTP.getLastBootTime()).c_str());
 }

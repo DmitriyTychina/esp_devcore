@@ -8,10 +8,12 @@
 
 #define MQTT_TtaskDefault 53
 
+// #define MQTT_QUEUE
+
 // не более 255, индекс массива везде 8 бит
 enum e_IDDirTopic : uint8 // в паре с ArrDirTopic[]
 {
-    _empty,
+    d_empty,
     _main_topic,
     _State,
     _Status,
@@ -59,7 +61,7 @@ const char ArrDirTopic[_LastElement_e_IDDirTopic][10] /* PROGMEM */ = // в па
 // "ESP/NTC/Math",
 // "ESP/NTC/Settings",
 // USER_AREA_END****!!!!@@@@####$$$$%%%%^^^^
-#endif // USER_AREA
+#endif          // USER_AREA
         "Info", // остальные папки топиков пишем без основного топика системы
         "Settings",
         // Settings/WIFI
@@ -82,6 +84,7 @@ const char ArrDirTopic[_LastElement_e_IDDirTopic][10] /* PROGMEM */ = // в па
 // не более 255, индекс массива везде используем 8бит
 enum e_IDVarTopic : uint8 // в паре с ArrVarTopic[]
 {
+    v_empty,
     _all,
 #ifdef USER_AREA
     // ****!!!!@@@@####$$$$%%%%^^^^USER_AREA_BEGIN
@@ -135,7 +138,9 @@ enum e_IDVarTopic : uint8 // в паре с ArrVarTopic[]
     // NTP,
     // Commands
     _Debug,
-    _Read,
+    _ReadDflt,
+    _ReadCrnt,
+    _Edit,
     _Save,
     _Mode,
     // last element (unuse)
@@ -143,6 +148,7 @@ enum e_IDVarTopic : uint8 // в паре с ArrVarTopic[]
 };
 const char ArrVarTopic[_LastElement_e_IDVarTopic][14] /* PROGMEM */ = // в паре с e_IDVarTopic
     {
+        "",
         "#",
 #ifdef USER_AREA
         // ****!!!!@@@@####$$$$%%%%^^^^USER_AREA_BEGIN
@@ -196,15 +202,17 @@ const char ArrVarTopic[_LastElement_e_IDVarTopic][14] /* PROGMEM */ = // в па
         // "NTP",
         // Commands
         "Debug",
-        "Read",
+        "ReadDflt",
+        "ReadCrnt",
+        "Edit",
         "Save",
         "Mode",
 };
 
-struct s_element_Queue_MQTT
+struct s_element_MQTT
 {
-    String *topic;
-    String *payload;
+    char *topic;
+    char *payload;
 };
 
 enum e_state_MQTT : uint8_t
@@ -214,17 +222,29 @@ enum e_state_MQTT : uint8_t
     _MQTT_on_connected, // подключились
     _MQTT_connected     // подключены
 };
-extern e_state_MQTT state_MQTT;  // Состояние подключения к MQTT
+extern e_state_MQTT MQTT_state;  // Состояние подключения к MQTT
 extern uint16_t mqtt_count_conn; // количество (пере)подключений к серверу mqtt
+// extern uint8_t idx_eth_rom; // номер записи в g_p_ethernet_settings_ROM - для получения адреса сервера MQTT
 
-void mqtt_init(uint8_t num_serv);
+typedef void (*t_Callback)(s_element_MQTT);
+#define size_IDDirTopic 4
+struct s_SubscribeElement
+{
+    e_IDDirTopic IDDirTopic[size_IDDirTopic];
+    e_IDVarTopic IDVarTopic;
+    uint8_t mqttQOS;
+    t_Callback Callback;
+};
+
+void mqtt_init(uint8_t _idx);
 void onMqttConnect(bool sessionPresent);
 void onMqttDisconnect(AsyncMqttClientDisconnectReason reason);
+
 void StartMqtt(void);
 void StopMqtt(void);
-void t_MQTT_cb();
-void t_publicMQTT_cb(void);
-void t_queueMQTTsub_cb(void);
+void cb_ut_MQTT();
+// void t_publicMQTT_cb(void);
+// void t_queueMQTTsub_cb(void);
 
 void mqtt_publish(e_IDDirTopic *_IDDirTopic, e_IDVarTopic _IDVarTopic, bool payload);
 void mqtt_publish(e_IDDirTopic *_IDDirTopic, e_IDVarTopic _IDVarTopic, int32_t payload);
@@ -246,6 +266,9 @@ bool is_equal_disable(const char *char_str);
 
 String CreateTopic(e_IDDirTopic *_IDDirTopic, e_IDVarTopic _IDVarTopic);
 // void CreateTopic(char *result, e_IDDirTopic _IDDirTopic, e_IDVarTopic _IDVarTopic);
+
+void mqtt_subscribe(s_SubscribeElement _sub_element);
+void mqtt_unsubscribe(s_SubscribeElement _sub_element);
 
 extern AsyncMqttClient client;
 

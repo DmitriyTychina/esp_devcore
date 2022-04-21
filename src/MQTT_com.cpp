@@ -36,7 +36,7 @@
 // USER_AREA_END****!!!!@@@@####$$$$%%%%^^^^
 #endif // USER_AREA
 
-// void MQTT_com_SaveSettings(s_element_Queue_MQTT _element)
+// void MQTT_com_SaveSettings(s_element_MQTT _element)
 // {
 //     // debuglog_print_free_memory();
 //     const char *payload = _element.payload->c_str();
@@ -61,7 +61,7 @@
 //     //     return;
 //     if (NeedSaveSettings.value)
 //     {
-//         e_IDDirTopic dir_topic[] = {_main_topic, _Settings, _empty, _empty};
+//         e_IDDirTopic dir_topic[] = {_main_topic, _Settings, d_empty, d_empty};
 //         mqtt_publish(dir_topic, _Save, "NeedSave");
 //         return;
 //     }
@@ -70,37 +70,23 @@
 //     // debuglog_print_free_memory();
 // }
 
-void MQTT_com_Settings(s_element_Queue_MQTT _element)
+void cb_MQTT_com_Settings(s_element_MQTT _element)
 {
     // EmptyMemorySettingsNTC();
     // debuglog_print_free_memory();
-    char *topic = (char *)_element.topic->c_str();
+    // char *topic = (char *)_element.topic->c_str();
+    // char *topic = _element.topic;
     // _element.payload->toLowerCase();
-    char *payload = (char *)_element.payload->c_str();
-    uint8_t payload_len = strlen(payload);
-    rsdebugInfln("MQTT_com_Settings:%s[%s]", topic, payload);
+    // char *payload = (char *)_element.payload->c_str();
+    // char *payload = _element.payload;
+    uint8_t payload_len = strlen(_element.payload);
+    rsdebugInfln("cb_MQTT_com_Settings:%s[%s]", _element.topic, _element.payload);
     // const char ArrVarTopic[_LastElement_e_IDVarTopic][14]
     // const char ArrDirTopic[_LastElement_e_IDDirTopic][10]
     // char arr_dir[10][14] = {"", "", "", "", "", "", "", "", ""};
-    char arr_dir[5][16] = {"", "", "", "", ""};
+    char arr_dir[8][16] = {"", "", "", "", ""}; // [уровней][символов]
     uint16_t i = 0;
-    // do
-    // {
-    //     char *n = strrchr(topic, '/');
-    //     if (n)
-    //     {
-    //         strcpy(arr_dir[i], n + 1);
-    //         strcpy(n, "");
-    //     }
-    //     else
-    //     {
-    //         strcpy(arr_dir[i], topic);
-    //         strcpy(topic, "");
-    //     }
-    //     rsdebugDln("dir[%d]: %s", i, arr_dir[i]);
-    //     i++;
-    // } while (strlen(topic) != 0);
-    char *pch = strtok(topic, "/");
+    char *pch = strtok(_element.topic, "/");
     while (pch != NULL)
     {
         strcpy(arr_dir[i], pch);
@@ -112,15 +98,16 @@ void MQTT_com_Settings(s_element_Queue_MQTT _element)
     {
         if (!strcmp(arr_dir[1], ArrDirTopic[_Settings]))
         {
-            e_IDDirTopic dir_topic[] = {_main_topic, _Settings, _empty, _empty};
-            // e_IDDirTopic dir_topic_tmp[] = {_main_topic, _Settings, _empty, _empty};
+            LoadInMemorySettingsSys();
+            LoadInMemorySettingsEthernet();
+            LoadInMemorySettingsNTP();
+            e_IDDirTopic dir_topic[] = {_main_topic, _Settings, d_empty, d_empty};
             if (!strcmp(arr_dir[2], ArrDirTopic[_RSdebug]))
             {
                 dir_topic[2] = _RSdebug;
-                LoadInMemorySettingsSys();
                 if (!strcmp(arr_dir[3], ArrVarTopic[_T_task]))
                 {
-                    if (Modify_task_tTask(dir_topic, payload, &ut_debuglog, 10, 1000, &g_p_sys_settings_ROM->RSDebug_Ttask))
+                    if (Modify_task_tTask(dir_topic, _element.payload, &ut_debuglog, 10, 1000, &g_p_sys_settings_ROM->RSDebug_Ttask))
                         NeedSaveSettings.bit.RSDebug = true;
                 }
                 else if (!strcmp(arr_dir[3], ArrDirTopic[_Sdebug]))
@@ -129,11 +116,11 @@ void MQTT_com_Settings(s_element_Queue_MQTT _element)
                     // rsdebugDlnF("***_Sdebug");
                     if (!strcmp(arr_dir[4], ArrVarTopic[_Enable]))
                     {
-                        if (strlen(payload) == 0) // публикуем значение по умолчанию если пришла пустая строка
+                        if (payload_len == 0) // публикуем значение по умолчанию если пришла пустая строка
                         {
                             mqtt_publish(dir_topic, _Enable, Debug.isSdebugEnabled());
                         }
-                        else if (is_equal_enable(payload))
+                        else if (is_equal_enable(_element.payload))
                         {
                             // rsdebugDlnF("***setSdebugEnabled(true)");
                             if (!Debug.isSdebugEnabled())
@@ -144,7 +131,7 @@ void MQTT_com_Settings(s_element_Queue_MQTT _element)
                                 // MQTT_pub_Info_NeedSaveSettings("NeedSave_RSDebug");
                             }
                         }
-                        else if (is_equal_disable(payload))
+                        else if (is_equal_disable(_element.payload))
                         {
                             // rsdebugDlnF("***setSdebugEnabled(false)");
                             if (Debug.isSdebugEnabled())
@@ -164,11 +151,11 @@ void MQTT_com_Settings(s_element_Queue_MQTT _element)
                     // rsdebugDlnF("***_Rdebug");
                     if (!strcmp(arr_dir[4], ArrVarTopic[_Enable]))
                     {
-                        if (strlen(payload) == 0) // публикуем значение по умолчанию если пришла пустая строка
+                        if (payload_len == 0) // публикуем значение по умолчанию если пришла пустая строка
                         {
                             mqtt_publish(dir_topic, _Enable, Debug.isRdebugEnabled());
                         }
-                        else if (is_equal_enable(payload))
+                        else if (is_equal_enable(_element.payload))
                         {
                             // rsdebugDlnF("***setRdebugEnabled(true)");
                             if (!Debug.isRdebugEnabled())
@@ -182,7 +169,7 @@ void MQTT_com_Settings(s_element_Queue_MQTT _element)
                             // if (!t_debuglog.isEnabled())
                             // t_debuglog.enable();
                         }
-                        else if (is_equal_disable(payload))
+                        else if (is_equal_disable(_element.payload))
                         {
                             // rsdebugDlnF("***setRdebugEnabled(false)");
                             if (Debug.isRdebugEnabled())
@@ -205,10 +192,9 @@ void MQTT_com_Settings(s_element_Queue_MQTT _element)
             else if (!strcmp(arr_dir[2], ArrDirTopic[_SysMon]))
             {
                 dir_topic[2] = _SysMon;
-                LoadInMemorySettingsSys();
                 if (!strcmp(arr_dir[3], ArrVarTopic[_T_task]))
                 {
-                    if (Modify_task_tTask(dir_topic, payload, &ut_sysmon, 1000, 3600000, &g_p_sys_settings_ROM->SysMon_Ttask))
+                    if (Modify_task_tTask(dir_topic, _element.payload, &ut_sysmon, 1000, 3600000, &g_p_sys_settings_ROM->SysMon_Ttask))
                     {
                         NeedSaveSettings.bit.SysMon = true;
                         SysMon_Init();
@@ -218,7 +204,6 @@ void MQTT_com_Settings(s_element_Queue_MQTT _element)
             else if (!strcmp(arr_dir[2], ArrDirTopic[_OTA]))
             {
                 dir_topic[2] = _OTA;
-                LoadInMemorySettingsSys();
                 if (!strcmp(arr_dir[3], ArrVarTopic[_T_task]))
                 {
                     // if (Modify_task_tTask(dir_topic, payload, &ut_OTA, 1, 5000, &g_p_sys_settings_ROM->OTA_Ttask))
@@ -229,21 +214,20 @@ void MQTT_com_Settings(s_element_Queue_MQTT _element)
             else if (!strcmp(arr_dir[2], ArrDirTopic[_MQTT]))
             {
                 dir_topic[2] = _MQTT;
-                LoadInMemorySettingsEthernet();
                 if (!strcmp(arr_dir[3], ArrVarTopic[_T_task]))
                 {
-                    if (Modify_task_tTask(dir_topic, payload, &ut_MQTT, 1, 1000, &g_p_ethernet_settings_ROM->MQTT_Ttask))
+                    if (Modify_task_tTask(dir_topic, _element.payload, &ut_MQTT, 1, 1000, &g_p_ethernet_settings_ROM->MQTT_Ttask))
                         NeedSaveSettings.bit.MQTT = true;
                 }
                 else if (!strcmp(arr_dir[3], ArrVarTopic[_USER]))
                 {
                     if (payload_len == 0)
                         mqtt_publish(dir_topic, _USER, "*****");
-                    else if (strcmp(payload, "*****") != 0)
+                    else if (strcmp(_element.payload, "*****") != 0)
                     {
-                        if (strcmp(g_p_ethernet_settings_ROM->MQTT_user, payload) != 0) // не совпадает
+                        if (strcmp(g_p_ethernet_settings_ROM->MQTT_user, _element.payload) != 0) // не совпадает
                         {
-                            strcpy(g_p_ethernet_settings_ROM->MQTT_user, payload);
+                            strcpy(g_p_ethernet_settings_ROM->MQTT_user, _element.payload);
                             NeedSaveSettings.bit.MQTT = true;
                             // MQTT_pub_Info_NeedSaveSettings("NeedSave_MQTT");
                         }
@@ -253,11 +237,11 @@ void MQTT_com_Settings(s_element_Queue_MQTT _element)
                 {
                     if (payload_len == 0)
                         mqtt_publish(dir_topic, _PASS, "*****");
-                    else if (strcmp(payload, "*****") != 0)
+                    else if (strcmp(_element.payload, "*****") != 0)
                     {
-                        if (strcmp(g_p_ethernet_settings_ROM->MQTT_pass, payload) != 0) // не совпадает
+                        if (strcmp(g_p_ethernet_settings_ROM->MQTT_pass, _element.payload) != 0) // не совпадает
                         {
-                            strcpy(g_p_ethernet_settings_ROM->MQTT_pass, payload);
+                            strcpy(g_p_ethernet_settings_ROM->MQTT_pass, _element.payload);
                             NeedSaveSettings.bit.MQTT = true;
                             // MQTT_pub_Info_NeedSaveSettings("NeedSave_MQTT");
                         }
@@ -268,10 +252,9 @@ void MQTT_com_Settings(s_element_Queue_MQTT _element)
             else if (!strcmp(arr_dir[2], ArrDirTopic[_WIFI]))
             {
                 dir_topic[2] = _WIFI;
-                LoadInMemorySettingsEthernet();
                 if (!strcmp(arr_dir[3], ArrVarTopic[_T_task]))
                 {
-                    if (Modify_task_tTask(dir_topic, payload, &ut_wifi, 1, 500, &g_p_ethernet_settings_ROM->WiFi_Ttask))
+                    if (Modify_task_tTask(dir_topic, _element.payload, &ut_wifi, 1, 500, &g_p_ethernet_settings_ROM->WiFi_Ttask))
                         NeedSaveSettings.bit.WIFI = true;
                 }
                 else
@@ -296,9 +279,9 @@ void MQTT_com_Settings(s_element_Queue_MQTT _element)
                                 mqtt_publish(dir_topic, _SSID, g_p_ethernet_settings_ROM->settings_serv[num_AP].SSID);
                                 // rsdebugDnfln("payload_len == 0");
                             }
-                            else if (strcmp(g_p_ethernet_settings_ROM->settings_serv[num_AP].SSID, payload) != 0) // не совпадает
+                            else if (strcmp(g_p_ethernet_settings_ROM->settings_serv[num_AP].SSID, _element.payload) != 0) // не совпадает
                             {
-                                strcpy(g_p_ethernet_settings_ROM->settings_serv[num_AP].SSID, payload);
+                                strcpy(g_p_ethernet_settings_ROM->settings_serv[num_AP].SSID, _element.payload);
                                 NeedSaveSettings.bit.WIFI = true;
                                 // MQTT_pub_Info_NeedSaveSettings("NeedSave_WiFi");
                                 // rsdebugDnfln("_serv[%d].SSID: %s len: %d", num_AP, g_p_ethernet_settings_ROM->settings_serv[num_AP].SSID, strlen(g_p_ethernet_settings_ROM->settings_serv[num_AP].SSID));
@@ -316,11 +299,11 @@ void MQTT_com_Settings(s_element_Queue_MQTT _element)
                         {
                             if (payload_len == 0)
                                 mqtt_publish(dir_topic, _PASS, "*****");
-                            else if (strcmp(payload, "*****") != 0)
+                            else if (strcmp(_element.payload, "*****") != 0)
                             {
-                                if (strcmp(g_p_ethernet_settings_ROM->settings_serv[num_AP].PASS, payload) != 0) // не совпадает
+                                if (strcmp(g_p_ethernet_settings_ROM->settings_serv[num_AP].PASS, _element.payload) != 0) // не совпадает
                                 {
-                                    strcpy(g_p_ethernet_settings_ROM->settings_serv[num_AP].PASS, payload);
+                                    strcpy(g_p_ethernet_settings_ROM->settings_serv[num_AP].PASS, _element.payload);
                                     NeedSaveSettings.bit.WIFI = true;
                                     // MQTT_pub_Info_NeedSaveSettings("NeedSave_WiFi");
                                 }
@@ -334,9 +317,9 @@ void MQTT_com_Settings(s_element_Queue_MQTT _element)
                             {
                                 mqtt_publish(dir_topic, _IP_serv, g_p_ethernet_settings_ROM->settings_serv[num_AP].MQTTip);
                             }
-                            else if (strcmp(g_p_ethernet_settings_ROM->settings_serv[num_AP].MQTTip, payload) != 0) // не совпадает
+                            else if (strcmp(g_p_ethernet_settings_ROM->settings_serv[num_AP].MQTTip, _element.payload) != 0) // не совпадает
                             {
-                                strcpy(g_p_ethernet_settings_ROM->settings_serv[num_AP].MQTTip, payload);
+                                strcpy(g_p_ethernet_settings_ROM->settings_serv[num_AP].MQTTip, _element.payload);
                                 NeedSaveSettings.bit.WIFI = true;
                                 // rsdebugInfln("IP_MQTT_com2:%s[%d]", g_p_ethernet_settings_ROM->settings_serv[num_AP].MQTTip, num_AP);
                                 // MQTT_pub_Info_NeedSaveSettings("NeedSave_WiFi");
@@ -351,45 +334,44 @@ void MQTT_com_Settings(s_element_Queue_MQTT _element)
                 }
                 // EmptyMemorySettingsEthernet();
             }
-            else if (!strcmp(arr_dir[2], ArrVarTopic[_Default]))
+            else if (!strcmp(arr_dir[2], ArrVarTopic[_ReadDflt]))
             {
-                // dir_topic[2] = _Default;
-                if (is_equal_ok(payload))
+                if (is_equal_ok(_element.payload))
                     return;
-                else if (is_equal_enable(payload))
+                else if (is_equal_enable(_element.payload))
                 {
                     // NotSaveEmptyMemorySettings();
                     // ROMVerifySettingsElseSaveDefault(true);
                     // all_settings_Default(g_p_all_settings_ROM);
                     MQTT_pub_allSettings(false); // данные по умолчанию
-                    mqtt_publish_ok(dir_topic, _Default);
+                    mqtt_publish_ok(dir_topic, _ReadDflt);
                     // rsdebugDnfln("dir_topic, _Default, ok");
                 }
                 else
                 {
-                    mqtt_publish_no(dir_topic, _Default);
+                    mqtt_publish_no(dir_topic, _ReadDflt);
                     // rsdebugDnfln("dir_topic_tmp, _Default, no");
                 }
             }
-            else if (!strcmp(arr_dir[2], ArrVarTopic[_Read]))
+            else if (!strcmp(arr_dir[2], ArrVarTopic[_ReadCrnt]))
             {
                 // dir_topic[2] = _Read;
-                if (is_equal_ok(payload))
+                if (is_equal_ok(_element.payload))
                     return;
-                else if (is_equal_enable(payload))
+                else if (is_equal_enable(_element.payload))
                 {
                     MQTT_pub_allSettings();
-                    mqtt_publish_ok(dir_topic, _Read);
+                    mqtt_publish_ok(dir_topic, _ReadCrnt);
                 }
                 else
-                    mqtt_publish_no(dir_topic, _Read);
+                    mqtt_publish_no(dir_topic, _ReadCrnt);
             }
             else if (!strcmp(arr_dir[2], ArrVarTopic[_Save]))
             {
                 // dir_topic[2] = _Save;
-                if (is_equal_ok(payload))
+                if (is_equal_ok(_element.payload))
                     return;
-                else if (is_equal_enable(payload))
+                else if (is_equal_enable(_element.payload))
                 {
                     SaveAllSettings();
                     mqtt_publish_ok(dir_topic, _Save);
@@ -399,39 +381,38 @@ void MQTT_com_Settings(s_element_Queue_MQTT _element)
             }
             else if (!strcmp(arr_dir[2], ArrVarTopic[_Debug]))
             {
-                if (is_equal_ok(payload))
+                if (is_equal_ok(_element.payload))
                     return;
                 // else if (!strcmp(payload, ""))
                 //     ; // ничего не делаем
-                else if (!strcmp(payload, "timereset"))
+                else if (!strcmp(_element.payload, "timereset"))
                 {
                     MQTT_pub_Info_TimeReset();
                     mqtt_publish_ok(dir_topic, _Debug);
                 }
                 // else if (!strcmp(payload, "getipntp"))
                 // {
-                //     LoadInMemorySettingsNTP();
-                //     e_IDDirTopic dir_topic[] = {_main_topic, _Settings, _NTP, _empty};
+                //     e_IDDirTopic dir_topic[] = {_main_topic, _Settings, _NTP, d_empty};
                 //     MQTT_pub_Settings_NTP_IP(dir_topic, _IP1, 0);
                 //     MQTT_pub_Settings_NTP_IP(dir_topic, _IP2, 1);
                 //     MQTT_pub_Settings_NTP_IP(dir_topic, _IP3, 2);
                 //     EmptyMemorySettingsNTP();
                 // }
-                else if (!strcmp(payload, "reset"))
+                else if (!strcmp(_element.payload, "reset"))
                 {
                     rsdebugWnflnF("Restart ESP");
-                    // e_IDDirTopic dir_topic[] = {_main_topic, _Settings, _empty, _empty};
+                    // e_IDDirTopic dir_topic[] = {_main_topic, _Settings, d_empty, d_empty};
                     mqtt_publish(dir_topic, _Debug, "Restarting...");
                     // os_delay_us(500000);
                     ESP.restart(); // Reset
                 }
                 else
                 {
-                    mqtt_publish(dir_topic, _Debug, strcat(payload, "-undefined"));
+                    mqtt_publish(dir_topic, _Debug, strcat(_element.payload, "-undefined"));
                 }
             }
-            dir_topic[2] = _empty;
-            dir_topic[3] = _empty;
+            dir_topic[2] = d_empty;
+            dir_topic[3] = d_empty;
             if (NeedSaveSettings.value)
                 mqtt_publish(dir_topic, _Save, "NeedSave");
             else

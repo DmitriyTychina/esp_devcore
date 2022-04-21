@@ -76,7 +76,7 @@ void init_OTA(void)
 	// rsdebugDnflnF("OK");
 }
 
-void t_ota_cb(void)
+void cb_ut_ota(void)
 {
 	ArduinoOTA.handle();
 	// rsdebugDnflnF("*OTA*");

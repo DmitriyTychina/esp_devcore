@@ -16,7 +16,7 @@ struct s_NTP_settings_ROM
 
 void init_NTP(void);
 void init_NTP_with_WiFi(void);
-void t_NTP_cb(void);
+void cb_ut_NTP(void);
 
 extern NTPClient NTP;
 extern s_NTP_settings_ROM *g_p_NTP_settings_ROM;
