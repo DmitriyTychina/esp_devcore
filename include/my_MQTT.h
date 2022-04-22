@@ -261,6 +261,7 @@ void mqtt_publish_no(e_IDDirTopic *_IDDirTopic, e_IDVarTopic _IDVarTopic);
 
 // bool char_strs_mqtt_is_equal(const char *char_str1, const char *char_str2);
 bool is_equal_ok(const char *char_str);
+bool is_equal_no(const char *char_str);
 bool is_equal_enable(const char *char_str);
 bool is_equal_disable(const char *char_str);
 

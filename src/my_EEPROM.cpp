@@ -64,50 +64,31 @@ void ROMVerifySettingsElseSaveDefault(bool force)
     // get_p_all_settings_ROM(_p_all_settings_ROM);
     // EEPROM.getConstDataPtr();
     // rsdebugDlnF("@3");
-    if (!_p_all_settings_ROM)
-    // if (!s1)
+    if (_p_all_settings_ROM)
     {
-        // rsdebugDlnF("@33");
-        return;
-    }
-    // rsdebugDlnF("@4");
-    if (!force)
-    {
+        // rsdebugDlnF("@4");
         rsdebugInfF("Проверяем CRC ROM");
         rsdebugInfln("[%d]", len_all_settings_ROM);
         // rsdebugInfln("ROM[%d]:%d", s1->len, len_all_settings_ROM);
-        if (/* (_p_all_settings_ROM->len == len_all_settings_ROM) &&  */ compareCRC(_p_all_settings_ROM, len_all_settings_ROM)) // если данные в памяти валидны
-        // if ((s1->len == len_all_settings_ROM) && compareCRC(s1, len_all_settings_ROM)) // если данные в памяти валидны
+        if (!force && compareCRC(_p_all_settings_ROM, len_all_settings_ROM)) // если данные в памяти валидны
         {
-            rsdebugInflnF("Данные в ROM валидны");
-            return;
+            rsdebugInflnF("Данные в ROM ok");
         }
         else
         {
-            rsdebugWnflnF("Данные в ROM не валидны");
+            rsdebugWnflnF("Данные в ROM not ok");
             all_settings_Default(_p_all_settings_ROM);
-            // all_settings_Default(s1);
             EEPROM.getDataPtr(); // установить флаг "данные изменились" для сохранения при EEPROM.end()
         }
     }
     else
-    {
-        // rsdebugDlnF("@5");
-        all_settings_Default(_p_all_settings_ROM);
-        // all_settings_Default(s1);
-        // rsdebugDlnF("@6");
-        EEPROM.getDataPtr(); // установить флаг "данные изменились" для сохранения при EEPROM.end()
-                             //  rsdebugDlnF("@7");
-    }
-    // rsdebugDlnF("@8");
+        rsdebugEnflnF("Нет указателя на данные из ROM");
     EEPROM.end();
-    // rsdebugDlnF("@9");
 }
 
-// Инициализируем ROM данными по умолчанию
 void all_settings_Default(s_all_settings_ROM *__p_all_settings_ROM)
 {
-    rsdebugInflnF("Инициализируем ROM по умолчанию");
+    rsdebugInflnF("Устанавливаем настройки по умолчанию");
     s_all_settings_ROM def_all_settings_ROM;
     // def_all_settings_ROM.len = len_all_settings_ROM;
     calcCRC(&def_all_settings_ROM, len_all_settings_ROM);                      // данные по умолчанию не имеют вычесленого CRC !!! - вычисляем
@@ -189,6 +170,7 @@ void LoadInMemorySettings(char *_name, void **p_MemorySettings, uint16_t _addr, 
             // get_p_all_settings_ROM(_p_all_settings_ROM); // EEPROM.getConstDataPtr();
             if (!_p_all_settings_ROM)
             {
+                EEPROM.end();
                 rsdebugEnflnF("Нет указателя на данные из ROM");
                 return;
             }
@@ -198,11 +180,11 @@ void LoadInMemorySettings(char *_name, void **p_MemorySettings, uint16_t _addr, 
             EEPROM.end();
             // rsdebugDnflnF("@8");
         }
-            // rsdebugDnflnF("@9");
+        // rsdebugDnflnF("@9");
     }
-            // rsdebugDnflnF("@10");
+    // rsdebugDnflnF("@10");
     ut_emptymemory.suspendNextCall(emptymemory_TtaskDefault);
-            // rsdebugDnflnF("@11");
+    // rsdebugDnflnF("@11");
 }
 
 // void LoadInMemorySettingsSys()
@@ -218,13 +200,13 @@ void LoadInMemorySettings(char *_name, void **p_MemorySettings, uint16_t _addr, 
 
 void EmptyMemorySettingsSys(bool force) // force=true для очистки памяти независимо от NeedSaveSettings.bit
 {
-    if (NeedSaveSettings.bit.OTA)
-        rsdebugInflnF("Перед очищением: настройки OTA не сохранены");
-    if (NeedSaveSettings.bit.RSDebug)
-        rsdebugInflnF("Перед очищением: настройки RSDebug не сохранены");
-    if (NeedSaveSettings.bit.SysMon)
-        rsdebugInflnF("Перед очищением: настройки SysMon не сохранены");
-    if (force || (!NeedSaveSettings.bit.OTA && !NeedSaveSettings.bit.RSDebug && !NeedSaveSettings.bit.SysMon))
+    if (NeedSaveSettings.of.sys.of.OTA)
+        rsdebugInflnF("Перед очищением Sys: OTA не сохранены");
+    if (NeedSaveSettings.of.sys.of.RSDebug)
+        rsdebugInflnF("Перед очищением Sys: RSDebug не сохранены");
+    if (NeedSaveSettings.of.sys.of.SysMon)
+        rsdebugInflnF("Перед очищением Sys: SysMon не сохранены");
+    if (force || !NeedSaveSettings.of.sys.all)
     {
         if (g_p_sys_settings_ROM)
         {
@@ -234,9 +216,10 @@ void EmptyMemorySettingsSys(bool force) // force=true для очистки па
             // EmptySettings(g_p_sys_settings_ROM);
             delete g_p_sys_settings_ROM;
             g_p_sys_settings_ROM = NULL;
-            NeedSaveSettings.bit.OTA = false;
-            NeedSaveSettings.bit.RSDebug = false;
-            NeedSaveSettings.bit.SysMon = false;
+            NeedSaveSettings.of.sys.all = 0;
+            // NeedSaveSettings.bit.OTA = false;
+            // NeedSaveSettings.bit.RSDebug_T_task = false;
+            // NeedSaveSettings.bit.SysMon = false;
         }
     }
 }
@@ -254,11 +237,11 @@ void EmptyMemorySettingsSys(bool force) // force=true для очистки па
 
 void EmptyMemorySettingsEthernet(bool force) // force=true для очистки памяти независимо от NeedSaveSettings.bit
 {
-    if (NeedSaveSettings.bit.WIFI)
-        rsdebugInflnF("Перед очищением: настройки WIFI не сохранены");
-    if (NeedSaveSettings.bit.MQTT)
-        rsdebugInflnF("Перед очищением: настройки MQTT не сохранены");
-    if (force || (!NeedSaveSettings.bit.WIFI && !NeedSaveSettings.bit.MQTT))
+    if (NeedSaveSettings.of.bit.WIFI)
+        rsdebugInflnF("Перед очищением настроек связи: WIFI не сохранены");
+    if (NeedSaveSettings.of.bit.MQTT)
+        rsdebugInflnF("Перед очищением настроек связи: MQTT не сохранены");
+    if (force || (!NeedSaveSettings.of.bit.WIFI && !NeedSaveSettings.of.bit.MQTT))
     {
         if (g_p_ethernet_settings_ROM)
         {
@@ -269,8 +252,8 @@ void EmptyMemorySettingsEthernet(bool force) // force=true для очистки
             delete g_p_ethernet_settings_ROM;
             g_p_ethernet_settings_ROM = NULL;
 
-            NeedSaveSettings.bit.WIFI = false;
-            NeedSaveSettings.bit.MQTT = false;
+            NeedSaveSettings.of.bit.WIFI = false;
+            NeedSaveSettings.of.bit.MQTT = false;
         }
     }
 }
@@ -290,9 +273,9 @@ void EmptyMemorySettingsNTP(bool force) // force=true для очистки па
 {
     if (g_p_NTP_settings_ROM)
     {
-        if (NeedSaveSettings.bit.NTP)
-            rsdebugInflnF("Перед очищением: настройки NTP не сохранены");
-        if (force || !NeedSaveSettings.bit.NTP)
+        if (NeedSaveSettings.of.bit.NTP)
+            rsdebugInflnF("Перед очищением NTP: NTP не сохранены");
+        if (force || !NeedSaveSettings.of.bit.NTP)
         {
             rsdebugInfF("Очищаем память от настроек NTP: ");
             rsdebugInfln("%d байт", len_NTP_settings_ROM);
@@ -300,7 +283,7 @@ void EmptyMemorySettingsNTP(bool force) // force=true для очистки па
             // EmptySettings(g_p_NTP_settings_ROM);
             delete g_p_NTP_settings_ROM;
             g_p_NTP_settings_ROM = NULL;
-            NeedSaveSettings.bit.NTP = false;
+            NeedSaveSettings.of.bit.NTP = false;
         }
     }
 }
@@ -308,70 +291,80 @@ void EmptyMemorySettingsNTP(bool force) // force=true для очистки па
 void verifyErrorNeedSaveSettings(const char *nameBit, bool _bit, void *settings_ROM)
 {
     if (_bit && !settings_ROM)
-        rsdebugEnfln("NeedSaveSettings.bit.%s=true, но нет указателя на данные", nameBit) else if (!_bit && settings_ROM)
-            rsdebugEnfln("NeedSaveSettings.bit.%s=false, но есть указатель на данные", nameBit);
+    {
+        rsdebugEnfln("NeedSaveSettings.bit.%s=true, но нет указателя на данные", nameBit)
+    }
+    // else if (!_bit && settings_ROM) // не нужно
+    // {
+    //     rsdebugEnfln("NeedSaveSettings.bit.%s=false, но есть указатель на данные", nameBit);
+    // }
 }
 
-void SaveAllSettings(void)
+bool SaveAllSettings(void)
 {
-    EEPROM.begin(len_all_settings_ROM);
-    // uint8_t *_p_all_settings_ROM = (uint8_t *)EEPROM.getConstDataPtr();
-    s_all_settings_ROM *_p_all_settings_ROM = (s_all_settings_ROM *)EEPROM.getConstDataPtr();
-    // s_all_settings_ROM *_p_all_settings_ROM = NULL;
-    // get_p_all_settings_ROM(_p_all_settings_ROM); // EEPROM.getConstDataPtr();
-    if (!_p_all_settings_ROM) // если нет указателя
+    if (NeedSaveSettings.all)
     {
-        rsdebugEnflnF("Нет указателя на данные из ROM");
-        return;
+        EEPROM.begin(len_all_settings_ROM);
+        // uint8_t *_p_all_settings_ROM = (uint8_t *)EEPROM.getConstDataPtr();
+        s_all_settings_ROM *_p_all_settings_ROM = (s_all_settings_ROM *)EEPROM.getConstDataPtr();
+        // s_all_settings_ROM *_p_all_settings_ROM = NULL;
+        // get_p_all_settings_ROM(_p_all_settings_ROM); // EEPROM.getConstDataPtr();
+        if (_p_all_settings_ROM) // если нет указателя
+        {
+            rsdebugInflnF("Сохраняем все данные:");
+            rsdebugDnfln("bit.RSDebug: %d", NeedSaveSettings.of.sys.of.RSDebug);
+            rsdebugDnfln("bit.OTA: %d", NeedSaveSettings.of.sys.of.OTA);
+            rsdebugDnfln("bit.SysMon: %d", NeedSaveSettings.of.sys.of.SysMon);
+            verifyErrorNeedSaveSettings("RSDebug", NeedSaveSettings.of.sys.of.RSDebug, g_p_sys_settings_ROM);
+            verifyErrorNeedSaveSettings("OTA", NeedSaveSettings.of.sys.of.OTA, g_p_sys_settings_ROM);
+            verifyErrorNeedSaveSettings("SysMon", NeedSaveSettings.of.sys.of.SysMon, g_p_sys_settings_ROM);
+            if (NeedSaveSettings.of.sys.all)
+            {
+                LoadInMemorySettingsSys();
+                rsdebugDnflnF("Сохраняем данные SYS");
+                memcpy(&_p_all_settings_ROM->sys_settings_ROM, g_p_sys_settings_ROM, len_sys_settings_ROM);
+                EmptyMemorySettingsSys(true);
+            }
+            rsdebugDnfln("bit.WIFI: %s", NeedSaveSettings.of.bit.WIFI ? "1" : "0");
+            rsdebugDnfln("bit.MQTT: %s", NeedSaveSettings.of.bit.MQTT ? "1" : "0");
+            verifyErrorNeedSaveSettings("WiFi", NeedSaveSettings.of.bit.WIFI, g_p_ethernet_settings_ROM);
+            verifyErrorNeedSaveSettings("MQTT", NeedSaveSettings.of.bit.MQTT, g_p_ethernet_settings_ROM);
+            if (NeedSaveSettings.of.bit.WIFI || NeedSaveSettings.of.bit.MQTT)
+            {
+                LoadInMemorySettingsEthernet();
+                rsdebugDnflnF("Сохраняем данные ethernet");
+                memcpy(&_p_all_settings_ROM->ethernet_settings_ROM, g_p_ethernet_settings_ROM, len_ethernet_settings_ROM);
+                EmptyMemorySettingsEthernet(true);
+            }
+            rsdebugDnfln("bit.NTP: %s", NeedSaveSettings.of.bit.NTP ? "1" : "0");
+            verifyErrorNeedSaveSettings("NTP", NeedSaveSettings.of.bit.NTP, g_p_NTP_settings_ROM);
+            if (NeedSaveSettings.of.bit.NTP)
+            {
+                LoadInMemorySettingsNTP();
+                rsdebugDnflnF("Сохраняем данные NTP");
+                memcpy(&_p_all_settings_ROM->NTP_settings_ROM, g_p_NTP_settings_ROM, len_NTP_settings_ROM);
+                EmptyMemorySettingsNTP(true);
+            }
+            calcCRC(_p_all_settings_ROM, len_all_settings_ROM);
+            EEPROM.getDataPtr(); // установить флаг "данные изменились" для сохранения при EEPROM.end()
+        }
+        else
+            rsdebugEnflnF("Нет указателя на данные из ROM");
+        EEPROM.end();
+        return true;
     }
-    rsdebugInflnF("Сохраняем все данные:");
-
-    rsdebugDnfln("bit.NTP: %s", NeedSaveSettings.bit.NTP ? "1" : "0");
-    verifyErrorNeedSaveSettings("NTP", NeedSaveSettings.bit.NTP, g_p_NTP_settings_ROM);
-    if (NeedSaveSettings.bit.NTP)
+    else
     {
-        LoadInMemorySettingsNTP();
-        rsdebugDnflnF("Сохраняем данные NTP");
-        memcpy(&_p_all_settings_ROM->NTP_settings_ROM, g_p_NTP_settings_ROM, len_NTP_settings_ROM);
-        EmptyMemorySettingsNTP(true);
+        rsdebugWnflnF("Нет изменений - не сохраняем");
+        return false;
     }
-
-    rsdebugDnfln("bit.OTA: %s", NeedSaveSettings.bit.OTA ? "1" : "0");
-    rsdebugDnfln("bit.RSDebug: %s", NeedSaveSettings.bit.RSDebug ? "1" : "0");
-    rsdebugDnfln("bit.SysMon: %s", NeedSaveSettings.bit.SysMon ? "1" : "0");
-    verifyErrorNeedSaveSettings("OTA", NeedSaveSettings.bit.OTA, g_p_sys_settings_ROM);
-    verifyErrorNeedSaveSettings("RSDebug", NeedSaveSettings.bit.RSDebug, g_p_sys_settings_ROM);
-    verifyErrorNeedSaveSettings("SysMon", NeedSaveSettings.bit.SysMon, g_p_sys_settings_ROM);
-    if (NeedSaveSettings.bit.OTA || NeedSaveSettings.bit.RSDebug || NeedSaveSettings.bit.SysMon)
-    {
-        LoadInMemorySettingsSys();
-        rsdebugDnflnF("Сохраняем данные SYS");
-        memcpy(&_p_all_settings_ROM->sys_settings_ROM, g_p_sys_settings_ROM, len_sys_settings_ROM);
-        EmptyMemorySettingsSys(true);
-    }
-
-    rsdebugDnfln("bit.WIFI: %s", NeedSaveSettings.bit.WIFI ? "1" : "0");
-    rsdebugDnfln("bit.MQTT: %s", NeedSaveSettings.bit.MQTT ? "1" : "0");
-    verifyErrorNeedSaveSettings("WiFi", NeedSaveSettings.bit.WIFI, g_p_ethernet_settings_ROM);
-    verifyErrorNeedSaveSettings("MQTT", NeedSaveSettings.bit.MQTT, g_p_ethernet_settings_ROM);
-    if (NeedSaveSettings.bit.WIFI || NeedSaveSettings.bit.MQTT)
-    {
-        LoadInMemorySettingsEthernet();
-        rsdebugDnflnF("Сохраняем данные ethernet");
-        memcpy(&_p_all_settings_ROM->ethernet_settings_ROM, g_p_ethernet_settings_ROM, len_ethernet_settings_ROM);
-        EmptyMemorySettingsEthernet(true);
-    }
-
-    calcCRC(_p_all_settings_ROM, len_all_settings_ROM);
-    EEPROM.getDataPtr(); // установить флаг "данные изменились" для сохранения при EEPROM.end()
-    EEPROM.end();
 }
 
 void NotSaveEmptyMemorySettings(void)
 {
-    EmptyMemorySettingsNTP(true);
     EmptyMemorySettingsSys(true);
     EmptyMemorySettingsEthernet(true);
+    EmptyMemorySettingsNTP(true);
     // EmptyMemorySettingsNTC(true);
 }
 
@@ -387,19 +380,31 @@ void calcCRC(void *p_struct, uint16_t len) // Вычисляем crc
 
 void cb_ut_emptymemory(void)
 {
-    if (NeedSaveSettings.value)
-    {
-        rsdebugDnfln("cb_emptymemory: %d", NeedSaveSettings.value);
-        rsdebugDnfln("bit.NTP: %s", NeedSaveSettings.bit.NTP ? "1" : "0");
-        rsdebugDnfln("bit.OTA: %s", NeedSaveSettings.bit.OTA ? "1" : "0");
-        rsdebugDnfln("bit.RSDebug: %s", NeedSaveSettings.bit.RSDebug ? "1" : "0");
-        rsdebugDnfln("bit.SysMon: %s", NeedSaveSettings.bit.SysMon ? "1" : "0");
-        rsdebugDnfln("bit.WIFI: %s", NeedSaveSettings.bit.WIFI ? "1" : "0");
-        rsdebugDnfln("bit.MQTT: %s", NeedSaveSettings.bit.MQTT ? "1" : "0");
-        if (wifi_state == _wifi_connected)
-            EmptyMemorySettingsEthernet();
-        EmptyMemorySettingsSys();
-        EmptyMemorySettingsNTP();
-        // EmptyMemorySettingsNTC();
-    }
+    // if (NeedSaveSettings.all)
+    // {
+    //     rsdebugDnfln("NeedSaveSettings: %d", NeedSaveSettings.all);
+    // }
+    // if (g_p_sys_settings_ROM)
+    // {
+    //     rsdebugDnflnF("g_p_sys_settings_ROM");
+    // }
+    // if (g_p_ethernet_settings_ROM)
+    // {
+    //     rsdebugDnflnF("g_p_ethernet_settings_ROM");
+    // }
+    // if (g_p_NTP_settings_ROM)
+    // {
+    //     rsdebugDnflnF("g_p_ethernet_settings_ROM");
+    // }
+    // rsdebugDnfln("bit.NTP: %s", NeedSaveSettings.bit.NTP ? "1" : "0");
+    // rsdebugDnfln("bit.OTA: %s", NeedSaveSettings.bit.OTA ? "1" : "0");
+    // rsdebugDnfln("bit.RSDebug: %s", isNSS_allRSDebug ? "1" : "0");
+    // rsdebugDnfln("bit.SysMon: %s", NeedSaveSettings.bit.SysMon ? "1" : "0");
+    // rsdebugDnfln("bit.WIFI: %s", NeedSaveSettings.bit.WIFI ? "1" : "0");
+    // rsdebugDnfln("bit.MQTT: %s", NeedSaveSettings.bit.MQTT ? "1" : "0");
+    if (wifi_state == _wifi_connected)
+        EmptyMemorySettingsEthernet();
+    EmptyMemorySettingsSys();
+    EmptyMemorySettingsNTP();
+    // EmptyMemorySettingsNTC();
 }

@@ -38,7 +38,7 @@ void cb_ut_sysmon(void)
   rsdebugInfln("CPU work %.3f %% of time.", CPUload);
   rsdebugInfln("CPU sleep %.3f %% of time.", CPUidle);
   // rsdebugDnfln("wifi_station_get_rssi: %d", wifi_station_get_rssi());
-  rsdebugDnfln("WiFi.SSID: %s", WiFi.SSID().c_str());
+  // rsdebugDnfln("WiFi.SSID: %s", WiFi.SSID().c_str());
 
   // ut_sysmon.cpuLoadReset(); // здесь не надо !!!
 }

@@ -14,8 +14,8 @@
 struct s_sys_settings_ROM
 {
     // uint16_t crc;
-    uint32_t OTA_Ttask = OTA_TtaskDefault;
     uint32_t RSDebug_Ttask = RSDebug_TtaskDefault;
+    uint32_t OTA_Ttask = OTA_TtaskDefault;
     uint32_t SysMon_Ttask = SysMon_TtaskDefault;
     bool RSDebug_SDebug = true;
     bool RSDebug_RDebug = true;
@@ -85,7 +85,7 @@ void EmptyMemorySettingsNTP(bool force = false);
 // void LoadInMemorySettingsNTC();
 // void EmptyMemorySettingsNTC(bool force = false);
 
-void SaveAllSettings(void);
+bool SaveAllSettings(void);
 void NotSaveEmptyMemorySettings(void);
 void LoadInMemorySettings(char *_name, void **p_MemorySettings, uint16_t _addr, uint16_t _size);
 
@@ -114,19 +114,40 @@ void calcCRC(void *p_struct, uint16_t len);
 
 union u_NeedSaveSettings
 {
-    uint32_t value = 0;
-    struct s_bit
+    uint32_t all = 0;
+    struct s_of
     {
-        unsigned WIFI : 1;
-        unsigned MQTT : 1;
-        unsigned NTP : 1;
-        unsigned OTA : 1;
-        unsigned RSDebug : 1;
-        unsigned SysMon : 1;
-        // unsigned NTC : 1;
-    } bit;
+        union u_sys
+        {
+            uint8_t all;
+            struct s_bit
+            {
+                unsigned RSDebug_T_task : 1;
+                unsigned RSDebug_RD_en : 1;
+                unsigned RSDebug_SD_en : 1;
+                unsigned OTA_T_task : 1;
+                unsigned SysMon_T_task : 1;
+            } bit;
+            struct s_of
+            {
+                unsigned RSDebug : 3;
+                unsigned OTA : 1;
+                unsigned SysMon : 1;
+            } of;
+        } sys;
+        struct s_bit
+        {
+            unsigned WIFI : 1;
+            unsigned MQTT : 1;
+            unsigned NTP : 1;
+            // unsigned NTC : 1;
+        } bit;
+    } of;
 };
-
+// #define isNSS_allRSDebug (NeedSaveSettings.of.sys.of.RSDebug != 0)
+// #define isNSS_allOTA (NeedSaveSettings.of.sys.of.OTA != 0)
+// #define isNSS_allSysMon (NeedSaveSettings.of.sys.of.SysMon != 0)
+// #define isNSS_allSys (NeedSaveSettings.of.sys.all != 0)
 void cb_ut_emptymemory(void);
 
 // extern bool NeedSaveSettings_NTP;

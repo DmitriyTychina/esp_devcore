@@ -3,7 +3,7 @@
 
 #include "my_MQTT.h"
 
-void MQTT_pub_allSettings(bool fromROMorDefault = true);
+void MQTT_pub_allSettings(bool fromROM);
 
 // void MQTT_pub_Commands_ok(e_IDVarTopic _IDVarTopic);
 // void MQTT_pub_Settings_ok(e_IDVarTopic _IDVarTopic);

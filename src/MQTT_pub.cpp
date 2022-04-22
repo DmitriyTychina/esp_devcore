@@ -8,25 +8,32 @@
 #include "my_wifi.h"
 #include "my_NTP.h"
 
-void MQTT_pub_allSettings(bool fromROMorDefault)
+void MQTT_pub_allSettings(bool fromROM)
 {
   s_all_settings_ROM def_all_settings_ROM;
-  if(fromROMorDefault)
-    rsdebugInflnF("Публикуем данные из ROM")
-  else
-    rsdebugInflnF("Публикуем данные по умолчанию")
-  e_IDDirTopic dir_topic[] = {_main_topic, _Settings, d_empty, d_empty};
-
   s_ethernet_settings_ROM *p_ethernet_settings;
-  if(fromROMorDefault)
+  s_sys_settings_ROM *p_sys_settings;
+  s_NTP_settings_ROM *p_NTP_settings;
+  if (fromROM)
   {
+    rsdebugInflnF("Публикуем текущие данные"); // ROM или памяти если не сохранены
     LoadInMemorySettingsEthernet();
     p_ethernet_settings = g_p_ethernet_settings_ROM;
+    LoadInMemorySettingsSys();
+    p_sys_settings = g_p_sys_settings_ROM;
+    LoadInMemorySettingsNTP();
+    p_NTP_settings = g_p_NTP_settings_ROM;
   }
   else
   {
+    rsdebugInflnF("Публикуем данные по умолчанию");
     p_ethernet_settings = &def_all_settings_ROM.ethernet_settings_ROM;
+    p_sys_settings = &def_all_settings_ROM.sys_settings_ROM;
+    p_NTP_settings = &def_all_settings_ROM.NTP_settings_ROM;
   }
+
+  // публикуем все сетевые настройки
+  e_IDDirTopic dir_topic[] = {_main_topic, _Settings, d_empty, d_empty};
   dir_topic[2] = _MQTT; // {_main_topic, _Settings, _MQTT, d_empty}
   mqtt_publish(dir_topic, _USER, "*****" /* p_ethernet_settings->MQTT_login */);
   mqtt_publish(dir_topic, _PASS, "*****" /* p_ethernet_settings->MQTT_pass */);
@@ -40,45 +47,23 @@ void MQTT_pub_allSettings(bool fromROMorDefault)
     mqtt_publish(dir_topic, _SSID, p_ethernet_settings->settings_serv[w].SSID);
     mqtt_publish(dir_topic, _PASS, "*****" /* p_ethernet_settings->settings_serv[i].PASS */);
     mqtt_publish(dir_topic, _IP_serv, p_ethernet_settings->settings_serv[w].MQTTip);
-    // rsdebugInfln("IP_MQTT_com0:%s[%d]", p_ethernet_settings->settings_serv[w].MQTTip, w);
   }
   dir_topic[3] = d_empty; // {_main_topic, _Settings, _WIFI, d_empty}
-  // EmptyMemorySettingsEthernet(true);
 
-  s_sys_settings_ROM *p_sys_settings;
-  if(fromROMorDefault)
-  {
-    LoadInMemorySettingsSys();
-    p_sys_settings = g_p_sys_settings_ROM;
-  }
-  else
-  {
-    p_sys_settings = &def_all_settings_ROM.sys_settings_ROM;
-  }
+  // публикуем все системные настройки
   dir_topic[2] = _RSdebug; // {_main_topic, _Settings, _RSdebug, d_empty}
   mqtt_publish(dir_topic, _T_task, p_sys_settings->RSDebug_Ttask);
   dir_topic[3] = _Sdebug; // {_main_topic, _Settings, _Settings, _RSdebug, _Sdebug}
   mqtt_publish(dir_topic, _Enable, p_sys_settings->RSDebug_SDebug /* ? "yes" : "no"*/);
   dir_topic[3] = _Rdebug; // {_main_topic, _Settings, _RSdebug, _Rdebug}
   mqtt_publish(dir_topic, _Enable, p_sys_settings->RSDebug_RDebug /* ? "yes" : "no"*/);
-  dir_topic[3] = d_empty;  // {_main_topic, _Settings, _RSdebug, d_empty}
+  dir_topic[3] = d_empty; // {_main_topic, _Settings, _RSdebug, d_empty}
   dir_topic[2] = _SysMon; // {_main_topic, _Settings, _SysMon, d_empty}
   mqtt_publish(dir_topic, _T_task, p_sys_settings->SysMon_Ttask);
-  // mqtt_publish(dir_topic, _Enable, p_sys_settings->SysMon_Ttask != 0 /* ? "yes" : "no"*/);
   dir_topic[2] = _OTA; // {_main_topic, _Settings, _OTA, d_empty}
   mqtt_publish(dir_topic, _T_task, p_sys_settings->OTA_Ttask);
-  // EmptyMemorySettingsSys(true);
 
-  s_NTP_settings_ROM *p_NTP_settings;
-  if(fromROMorDefault)
-  {
-    LoadInMemorySettingsNTP();
-    p_NTP_settings = g_p_NTP_settings_ROM;
-  }
-  else
-  {
-    p_NTP_settings = &def_all_settings_ROM.NTP_settings_ROM;
-  }
+  // публикуем все настройки NTP
   dir_topic[2] = _NTP; // {_main_topic, _Settings, _NTP, d_empty}
   mqtt_publish(dir_topic, _T_task, p_NTP_settings->Ttask);
   // mqtt_publish(dir_topic, _Enable, p_NTP_settings->Ttask /* ? "yes" : "no"*/);
@@ -89,8 +74,10 @@ void MQTT_pub_allSettings(bool fromROMorDefault)
   mqtt_publish(dir_topic, _Timezone, p_NTP_settings->timezone);
   // EmptyMemorySettingsNTP(true);
 
+  MQTT_pub_Info_TimeReset(); // на всякий случай
+
 #ifdef USER_AREA
-// ****!!!!@@@@####$$$$%%%%^^^^USER_AREA_BEGIN
+                             // ****!!!!@@@@####$$$$%%%%^^^^USER_AREA_BEGIN
 
   //   mqtt_publish(dir_topic, _T_task, g_p  dir_topic[1] = _Devices;
   //   dir_topic[2] = _NTC;
@@ -113,8 +100,8 @@ void MQTT_pub_allSettings(bool fromROMorDefault)
 
 // USER_AREA_END****!!!!@@@@####$$$$%%%%^^^^
 #endif // USER_AREA
-  // NeedSaveSettings.value = 0;
-  // MQTT_pub_Settings_ok(_Save);
+                             // NeedSaveSettings.value = 0;
+                             // MQTT_pub_Settings_ok(_Save);
 }
 
 // void MQTT_pub_Commands_ok(e_IDVarTopic _IDVarTopic)

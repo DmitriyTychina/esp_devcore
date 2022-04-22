@@ -180,19 +180,10 @@ void cb_ut_state_wifi(void)
                     rsdebugInfln("Соединяемся с WiFi-сетью: %s, %d", g_p_ethernet_settings_ROM->settings_serv[_idx].SSID, _idx);
                     WiFi.begin(g_p_ethernet_settings_ROM->settings_serv[_idx].SSID, g_p_ethernet_settings_ROM->settings_serv[_idx].PASS);
                     wifi_state = _wifi_connecting;
-                    // uTask *uTimerTimeout = new uTask(
-                    //     15000, []() {
-                    //         rsdebugEnflnF("\n_wifi_connecting --- timeout");
-                    //         wifi_state = _wifi_startfindAP;
-                    //     },
-                    //     true);
-                    _stopwatch = millis(); // (uint8)(t_wifi.getRunCounter() + 30);
-                    // rsdebugDnfln("\n1*****************_stopwatch: %d", _stopwatch);
-                    // rsdebugDnfln("***9 %d", g_p_ethernet_settings_ROM);
+                    _stopwatch = millis();
                     break;
                 }
             }
-
             // если нет наших сетей
             WiFi.scanDelete();
             if (wifi_state != _wifi_connecting)
@@ -202,25 +193,7 @@ void cb_ut_state_wifi(void)
                 wifi_state = _wifi_startfindAP;
             }
         }
-        // if (wifi_state != _wifi_startconnecting)
         break;
-    // case _wifi_startconnecting:
-    //     LoadInMemorySettingsEthernet();
-    //     // rsdebugDnfln("***8 %d", g_p_ethernet_settings_ROM);
-    //     // WiFi.mode(WIFI_STA);
-    //     rsdebugInfln("Соединяемся с WiFi-сетью: %s, %d", g_p_ethernet_settings_ROM->settings_serv[idx_eth_rom].SSID, idx_eth_rom);
-    //     WiFi.begin(g_p_ethernet_settings_ROM->settings_serv[idx_eth_rom].SSID, g_p_ethernet_settings_ROM->settings_serv[idx_eth_rom].PASS);
-    //     wifi_state = _wifi_connecting;
-    //     // uTask *uTimerTimeout = new uTask(
-    //     //     15000, []() {
-    //     //         rsdebugEnflnF("\n_wifi_connecting --- timeout");
-    //     //         wifi_state = _wifi_startfindAP;
-    //     //     },
-    //     //     true);
-    //     _stopwatch = millis(); // (uint8)(t_wifi.getRunCounter() + 30);
-    //     // rsdebugDnfln("\n1*****************_stopwatch: %d", _stopwatch);
-    //     // rsdebugDnfln("***9 %d", g_p_ethernet_settings_ROM);
-    //     break;
     default:
     case _wifi_connecting:
         // rsdebugDnfln("***10 %d", g_p_ethernet_settings_ROM);
@@ -230,18 +203,15 @@ void cb_ut_state_wifi(void)
         // rsdebugDnfln("\n4*****************2-3 > (2 * 15): %d", (t_wifi.getRunCounter() + 30) - _stopwatch);
         if ((/* (t_wifi.getRunCounter() + 30) */ millis() - _stopwatch) > (2 * 15000)) // 15 секунд
         {
-            rsdebugEnfln("\n_wifi_connecting --- timeout $millis[%d] $_stopwatch[%d]", millis(), _stopwatch);
+            rsdebugEnfln("\n_wifi_connecting --- timeout $millis[%d] $_stopwatch[%d]", (uint32_t)millis(), _stopwatch);
             wifi_state = _wifi_startfindAP;
         }
-        // rsdebugDnf("%d", t_wifi.getRunCounter());
-        // rsdebugDnfln("***11 %d", g_p_ethernet_settings_ROM);
         break;
     case _wifi_gotIP:
         // rsdebugDnfln("***12 %d", g_p_ethernet_settings_ROM);
         // rsdebugDnfln("***12.5 %d", g_p_ethernet_settings_ROM);
         wifi_state = _wifi_connected;
         wifi_count_conn++;
-        // t_wifi_connect.disable(); // выключаем (эту) задачу t_wifi_connect
         // rsdebugDnflnF("*************************** 1");
         // rsdebugDnfln("***13 %d", g_p_ethernet_settings_ROM);
         // LoadInMemorySettingsSys();
@@ -249,20 +219,13 @@ void cb_ut_state_wifi(void)
         // rsdebugDnflnF("*************************** 2");
         // rsdebugDnfln("***14 %d", g_p_ethernet_settings_ROM);
         dependent_tasks_enable(); // WiFi:Запускаем зависимые задачи
-                                  // rsdebugDnflnF("*************************** 3");
-                                  // rsdebugDnfln("***15 %d", g_p_ethernet_settings_ROM);
-        // EmptyMemorySettingsEthernet();
-        // rsdebugDnflnF("*************************** 4");
-        // rsdebugDnfln("***16 %d", g_p_ethernet_settings_ROM);
-        // rsdebugDln("****************************Hostname: %s", wifi_station_get_hostname());
-        // g_p_ethernet_settings_ROM = NULL;
         break;
     case _wifi_connected:
         // здесь выполняем uTask задачи зависящие от подключения к WiFi
         // rsdebugDnflnF("*************************** 5");
-        // ut_OTA.execute();
+        // ut_OTA.execute(); // вынес в main
         // rsdebugDnflnF("*************************** 6");
-        // ut_NTP.execute();
+        // ut_NTP.execute(); // вынес в main
         // deb_my_wifi(F("WiFi: _wifi_connected - этого мы не должны увидеть никогда !!!"));
         break;
     }

@@ -51,7 +51,7 @@ void processSyncEvent(NTPSyncEvent_t _ntpEvent)
 		rsdebugInfln("Got NTP time: %s", NTP.getTimeDateString(NTP.getLastNTPSync()).c_str());
 		rsdebugInfln("serverNTP=%s", g_p_NTP_settings_ROM->serversNTP[NumServerNTP]);
 		rsdebugInfln("Uptime: %s since %s", NTP.getUptimeString().c_str(), NTP.getTimeDateString(NTP.getFirstSync()).c_str());
-		EmptyMemorySettingsNTP();
+		// EmptyMemorySettingsNTP();
 		MQTT_pub_Info_TimeReset();
 	}
 	else if (_ntpEvent == noResponse)
