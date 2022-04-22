@@ -1,0 +1,8 @@
+#1 *только ядро
++- mqtt на базе AsyncMqttClient, прием без очереди, стабильный коннект/реконнект
++- mqtt_com оптимизация и bugfix
+/+ mqtt_com - переделать обработку массива char на обработку массива e_IDDirTopic и e_IDVarTopic
+/+ mqtt_com - сделать обработку настроек NTP
+/+? комманда Edit???
+RAM:   [====      ]  40.6% (used 33244 bytes from 81920 bytes)
+Flash: [====      ]  35.5% (used 371180 bytes from 1044464 bytes)
