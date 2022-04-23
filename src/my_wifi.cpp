@@ -22,7 +22,7 @@ s_ethernet_settings_ROM *g_p_ethernet_settings_ROM = NULL;
 
 inline void dependent_tasks_enable() // WiFi:Запускаем зависимые задачи
 {
-    rsdebugnflnF("WiFi connected: Запускаем зависимые задачи");
+    rsdebugnflnF("-Запускаем задачи зависимые от WiFi");
     rsdebugInflnF("--RDebuglog enable");
     init_rdebuglog();
     rsdebugInflnF("--OTA enable");
@@ -36,7 +36,7 @@ inline void dependent_tasks_enable() // WiFi:Запускаем зависимы
 
 inline void dependent_tasks_disable() // WiFi:Останавливаем зависимые задачи
 {
-    rsdebugnflnF("WiFi disconnected: Останавливаем зависимые задачи");
+    rsdebugnflnF("-Останавливаем задачи зависимые от WiFi");
     rsdebugInflnF("--MQTT disable");
     StopMqtt();
     rsdebugInflnF("--NTP disable");
@@ -54,7 +54,8 @@ void onStaModeGotIP(WiFiEvent_t event) // подключились и получ
     wifi_state = _wifi_gotIP;
     // all_param_RAM.    // uint8_t nowIP[4]; // зачем IP держать в памяти? есть WiFi.localIP()
     rsdebugnf("\n");
-    rsdebugInfln("enent:Получили IP: %s", WiFi.localIP().toString().c_str());
+    rsdebugInfF("Получили IP WiFi: ");
+    rsdebugInfln("%s", WiFi.localIP().toString().c_str());
 }
 
 void onStaModeDisconnected(WiFiEvent_t event) // произошло отключение
@@ -66,7 +67,8 @@ void onStaModeDisconnected(WiFiEvent_t event) // произошло отключ
     if (!Debug.isSdebugEnabled())
         Debug.setSdebugEnabled(true);
     rsdebugnf("\n");
-    rsdebugInfln("event:Дисконнект, из состояния: %d", wifi_state);
+    rsdebugInfF("event:Дисконнект, из состояния: ");
+    rsdebugInfln("%d", wifi_state);
     if (wifi_state == _wifi_connected || wifi_state == _wifi_connecting || wifi_state == _wifi_gotIP)
     {
         wifi_state = _wifi_disconnected;
@@ -158,26 +160,28 @@ void cb_ut_state_wifi(void)
         }
         if (n > 0)
         {
-            LoadInMemorySettingsEthernet(/* f_WIFI */);
+            // LoadInMemorySettingsEthernet();
             // rsdebugDnfln("***6 %d", g_p_ethernet_settings_ROM);
             // rsdebugDnfln("***7 %d", g_p_ethernet_settings_ROM);
             rsdebugnf("\n");
-            rsdebugInfln("Найдено сетей: %d", n);
+            rsdebugInfF("Найдено сетей: ");
+            rsdebugInfln("%d", n);
             for (i = 0; i < n; i++)
             {
                 rsdebugInfln("-- %s", WiFi.SSID(i).c_str());
             }
             for (i = 0; i < n; i++) // ищем наши
             {
+                LoadInMemorySettingsEthernet();
                 uint8_t _idx = get_idx_eth(WiFi.SSID(i));
                 if (_idx)
                 {
                     _idx--;
                     // нашли надо подключаться
-                    LoadInMemorySettingsEthernet();
                     // rsdebugDnfln("***8 %d", g_p_ethernet_settings_ROM);
                     // WiFi.mode(WIFI_STA);
-                    rsdebugInfln("Соединяемся с WiFi-сетью: %s, %d", g_p_ethernet_settings_ROM->settings_serv[_idx].SSID, _idx);
+                    rsdebugInfF("Соединяемся с WiFi");
+                    rsdebugInfln("[%d]: %s", _idx, g_p_ethernet_settings_ROM->settings_serv[_idx].SSID);
                     WiFi.begin(g_p_ethernet_settings_ROM->settings_serv[_idx].SSID, g_p_ethernet_settings_ROM->settings_serv[_idx].PASS);
                     wifi_state = _wifi_connecting;
                     _stopwatch = millis();

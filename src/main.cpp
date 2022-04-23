@@ -104,29 +104,30 @@ void setup()
   ROMVerifySettingsElseSaveDefault();
   // optimistic_Core(2000000);
   rsdebugInflnF("***Инициализация модулей***");
-  rsdebugInflnF("--SysMon");
+  rsdebugInflnF("--SysMon init");
   SysMon_Init();
-  rsdebugInflnF("--RSdebug");
+  rsdebugInflnF("--RSdebug init");
   init_sdebuglog();
 
 #ifdef USER_AREA
   // ****!!!!@@@@####$$$$%%%%^^^^USER_AREA_BEGIN
   // ранняя инициализация
-  rsdebugInflnF("--Door");
+  rsdebugInflnF("--Door init");
   door_init();
 // USER_AREA_END****!!!!@@@@####$$$$%%%%^^^^
 #endif // USER_AREA
 
-  rsdebugInflnF("--WiFi");
+  rsdebugInflnF("--WiFi init");
   init_WiFi();
-  rsdebugInflnF("--OTA");
+  rsdebugInflnF("--OTA init");
   init_OTA();
-  rsdebugInflnF("--NTP");
+  rsdebugInflnF("--NTP init");
   init_NTP();
 
 #ifdef USER_AREA
 // ****!!!!@@@@####$$$$%%%%^^^^USER_AREA_BEGIN
 // инициализация
+// rsdebugInflnF("--tgbcr init");
 // math_init();
 // USER_AREA_END****!!!!@@@@####$$$$%%%%^^^^
 #endif // USER_AREA

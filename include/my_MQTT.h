@@ -14,36 +14,36 @@
 enum e_IDDirTopic : uint8 // в паре с ArrDirTopic[]
 {
     d_empty,
-    _main_topic,
-    _State,
-    _Status,
-    _Devices,
+    d_main_topic,
+    d_state,
+    d_status,
+    d_devices,
 #ifdef USER_AREA
     // ****!!!!@@@@####$$$$%%%%^^^^USER_AREA_BEGIN
-    _Door,
+    d_door,
 // // ESP/NTC - датчик температуры
 // _ESP_NTC_Math,
 // _ESP_NTC_Settings,
 // USER_AREA_END****!!!!@@@@####$$$$%%%%^^^^
 #endif // USER_AREA
-    _Info,
-    _Settings,
+    d_info,
+    d_settings,
     // Settings/WIFI
-    _WIFI,
-    _AP1,
-    _AP2,
-    _AP3,
-    _AP4,
-    _AP5,
-    _MQTT,
-    _OTA,
-    _NTP,
+    d_wifi,
+    d_ap1,
+    d_ap2,
+    d_ap3,
+    d_ap4,
+    d_ap5,
+    d_mqtt,
+    d_ota,
+    d_ntp,
     // Settings/RSdebug
-    _RSdebug,
-    _Rdebug,
-    _Sdebug,
-    _SysMon,
-    _Commands,
+    d_rs_debug,
+    d_r_debug,
+    d_s_debug,
+    d_sysmon,
+    d_commands,
     // last element (unuse)
     _LastElement_e_IDDirTopic // для того чтобы компилятор сообщил что в ArrDirTopic больше элементов чем в e_IDDirTopic
 };
@@ -85,15 +85,15 @@ const char ArrDirTopic[_LastElement_e_IDDirTopic][10] /* PROGMEM */ = // в па
 enum e_IDVarTopic : uint8 // в паре с ArrVarTopic[]
 {
     v_empty,
-    _all,
+    v_all,
 #ifdef USER_AREA
     // ****!!!!@@@@####$$$$%%%%^^^^USER_AREA_BEGIN
     // // Math
     // _Value,
     // _Quality,
     // Door
-    _Latch,
-    _Open,
+    v_latch,
+    v_open,
 // //DeviceESP/NTC/Settings
 // _T_MQTT,
 // _DataDefault,
@@ -109,40 +109,41 @@ enum e_IDVarTopic : uint8 // в паре с ArrVarTopic[]
 // USER_AREA_END****!!!!@@@@####$$$$%%%%^^^^
 #endif // USER_AREA
     // Settings
-    _Enable,
-    _Default,
-    _T_task,
+    v_enable,
+    v_default,
+    v_t_task,
     // NTP
-    _Tsync,
-    _IP1,
-    _IP2,
-    _IP3,
-    _Timezone,
+    v_t_sync,
+    v_ip1,
+    v_ip2,
+    v_ip3,
+    v_timezone,
     // Wifi
-    _SSID,
-    _PASS,
-    _IP_serv,
+    v_ssid,
+    v_pass,
+    v_ip_serv,
     // MQTT
-    _USER,
+    v_user,
     // Info/
-    _CurrentWiFiAP,
-    _CurrentIP,
-    _ReasonReset,
-    _TimeReset,
-    _CntReconnMQTT,
-    _CntReconnWiFi,
-    _FreeRAM,
-    _CPUload,
-    _CPUcore,
+    v_current_wifi_ap,
+    v_currentip,
+    v_reason_reset,
+    v_time_reset,
+    v_cnt_reconn_mqtt,
+    v_cnt_reconn_wifi,
+    v_free_ram,
+    v_cpu_load_work,
+    v_cpu_load_core,
     // // Systems
     // NTP,
     // Commands
-    _Debug,
-    _ReadDflt,
-    _ReadCrnt,
-    _Edit,
-    _Save,
-    _Mode,
+    vc_Debug,
+    vc_Read,
+    vc_ReadDflt,
+    vc_ReadCrnt,
+    vc_Edit,
+    vc_Save,
+    vc_Mode,
     // last element (unuse)
     _LastElement_e_IDVarTopic // для того чтобы компилятор сообщил что в ArrVarTopic больше элементов чем в e_IDVarTopic
 };
@@ -196,17 +197,18 @@ const char ArrVarTopic[_LastElement_e_IDVarTopic][14] /* PROGMEM */ = // в па
         "CntReconnMQTT",
         "CntReconnWiFi",
         "FreeRAM",
-        "CPUload",
-        "CPUcore",
+        "CPUload_work",
+        "CPUload_core",
         // // Systems
         // "NTP",
         // Commands
-        "Debug",
-        "ReadDflt",
-        "ReadCrnt",
-        "Edit",
-        "Save",
-        "Mode",
+        "$Debug",
+        "$Read",
+        "$ReadDflt",
+        "$ReadCrnt",
+        "$Edit",
+        "$Save",
+        "$Mode",
 };
 
 struct s_element_MQTT
@@ -246,10 +248,10 @@ void cb_ut_MQTT();
 // void t_publicMQTT_cb(void);
 // void t_queueMQTTsub_cb(void);
 
-void mqtt_publish(e_IDDirTopic *_IDDirTopic, e_IDVarTopic _IDVarTopic, bool payload);
 void mqtt_publish(e_IDDirTopic *_IDDirTopic, e_IDVarTopic _IDVarTopic, int32_t payload);
 void mqtt_publish(e_IDDirTopic *_IDDirTopic, e_IDVarTopic _IDVarTopic, uint32_t payload);
 void mqtt_publish(e_IDDirTopic *_IDDirTopic, e_IDVarTopic _IDVarTopic, float payload, const char *format = "%.2f");
+void mqtt_publish(e_IDDirTopic *_IDDirTopic, e_IDVarTopic _IDVarTopic, bool payload);
 // void mqtt_publish(e_IDDirTopic *_IDDirTopic, e_IDVarTopic _IDVarTopic, float payload);
 void mqtt_publish(e_IDDirTopic *_IDDirTopic, e_IDVarTopic _IDVarTopic, const char *payload);
 void mqtt_publish(const char *_topic, const char *_payload);

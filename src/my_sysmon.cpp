@@ -22,21 +22,21 @@ void cb_ut_sysmon(void)
 {
   rsdebugInf("\n");
 
-  e_IDDirTopic dir_topic[] = {_main_topic, _Info, _SysMon, d_empty};
+  e_IDDirTopic dirs_topic[] = {d_main_topic, d_info, d_sysmon, d_empty};
   uint32_t freeRAM = ESP.getFreeHeap();
   rsdebugInfln("FreeRAM: %d", freeRAM);
   // rsdebugInfln("FreeSketchSpace: %u", ESP.getFreeSketchSpace());
-  mqtt_publish(dir_topic, _FreeRAM, freeRAM);
+  mqtt_publish(dirs_topic, v_free_ram, freeRAM);
   unsigned long cpuTot = ut_sysmon.getCpuLoadTotal();
   float CPUload = (float)ut_sysmon.getCpuLoadCycle() / (float)cpuTot * 100;
   float CPUCore = (float)ut_sysmon.getCpuLoadCore() / (float)cpuTot * 100;
   float CPUidle = 100 - CPUload - CPUCore;
-  mqtt_publish(dir_topic, _CPUload, (float)CPUload, "%.3f");
-  mqtt_publish(dir_topic, _CPUcore, (float)CPUCore, "%.3f");
-  // rsdebugInfln("CPU cpuTot %u of time.", cpuTot);
-  rsdebugInfln("CPU core %.3f %% of time.", CPUCore);
-  rsdebugInfln("CPU work %.3f %% of time.", CPUload);
-  rsdebugInfln("CPU sleep %.3f %% of time.", CPUidle);
+  mqtt_publish(dirs_topic, v_cpu_load_work, (float)CPUload, "%.3f");
+  mqtt_publish(dirs_topic, v_cpu_load_core, (float)CPUCore, "%.3f");
+// rsdebugInfln("CPU cpuTot %u of time.", cpuTot);
+  rsdebugInfln("CPUload core %.3f %%", CPUCore);
+  rsdebugInfln("CPUload work %.3f %%", CPUload);
+  rsdebugInfln("CPUload sleep %.3f %%", CPUidle);
   // rsdebugDnfln("wifi_station_get_rssi: %d", wifi_station_get_rssi());
   // rsdebugDnfln("WiFi.SSID: %s", WiFi.SSID().c_str());
 

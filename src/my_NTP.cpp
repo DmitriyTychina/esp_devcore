@@ -26,10 +26,6 @@ void processSyncEvent(NTPSyncEvent_t _ntpEvent)
 	LoadInMemorySettingsNTP();
 	if (_ntpEvent < 0)
 	{
-		// if (LoadInMemorySettingsNTP())
-		// {
-		// 	cnt_errorNTP = 0;
-		// }
 		if (++cnt_errorNTP > qnt_errorNTP)
 		{
 			cnt_errorNTP = 0;
@@ -38,19 +34,24 @@ void processSyncEvent(NTPSyncEvent_t _ntpEvent)
 				NumServerNTP = 0;
 			}
 		}
-		rsdebugWnfln("cnt_errorNTP=%d NumServerNTP=%d", cnt_errorNTP, NumServerNTP);
-		rsdebugWnfln("serverNTP=%s", g_p_NTP_settings_ROM->serversNTP[NumServerNTP]);
+		rsdebugWnfF("cnt_errorNTP:");
+		rsdebugWnfln("%d of %d", cnt_errorNTP, qnt_errorNTP);
+		rsdebugWnfF("ServerNTP");
+		rsdebugWnfln("[%d]:%s", NumServerNTP, g_p_NTP_settings_ROM->serversNTP[NumServerNTP]);
 		// NTP.begin(g_p_NTP_settings_ROM->serversNTP[NumServerNTP], g_p_NTP_settings_ROM->timezone, false /*переход на летнее/зимнее*/, minutesTimeZone);
-		rsdebugEnfln("Time Sync error: %d", _ntpEvent);
+		rsdebugEnfln("Time Sync error:%d", _ntpEvent);
 		init_NTP_with_WiFi();
 	}
 	else if (_ntpEvent == timeSyncd)
 	{
 		cnt_errorNTP = 0;
-		rsdebugInfln(" ");
-		rsdebugInfln("Got NTP time: %s", NTP.getTimeDateString(NTP.getLastNTPSync()).c_str());
-		rsdebugInfln("serverNTP=%s", g_p_NTP_settings_ROM->serversNTP[NumServerNTP]);
-		rsdebugInfln("Uptime: %s since %s", NTP.getUptimeString().c_str(), NTP.getTimeDateString(NTP.getFirstSync()).c_str());
+		rsdebugInflnF(" ");
+		rsdebugInfF("Got NTP time: ");
+		rsdebugInfln("%s", NTP.getTimeDateString(NTP.getLastNTPSync()).c_str());
+		rsdebugInfF("ServerNTP");
+		rsdebugInfln("[%d]:%s", NumServerNTP, g_p_NTP_settings_ROM->serversNTP[NumServerNTP]);
+		rsdebugInfF("Uptime: ");
+		rsdebugInfln("%s since %s", NTP.getUptimeString().c_str(), NTP.getTimeDateString(NTP.getFirstSync()).c_str());
 		// EmptyMemorySettingsNTP();
 		MQTT_pub_Info_TimeReset();
 	}
@@ -76,37 +77,26 @@ void init_NTP(void)
 {
 	NTP.onNTPSyncEvent([](NTPSyncEvent_t event)
 					   {
-						   ntpEvent = event;
-						   syncEventTriggered = true; });
-	// rsdebugDlnF("OK");
+		// rsdebugDnflnF("onNTPSyncEvent");
+		ntpEvent = event;
+		syncEventTriggered = true; 
+		ut_NTP.forceNextIteration(); });
 }
 
 void init_NTP_with_WiFi(void)
 {
-	rsdebugInflnF("StartNTP");
-	// bool NowLoad =
+	rsdebugInflnF("---StartNTP");
 	LoadInMemorySettingsNTP();
 
 	// rsdebugDln("T_syncNTP: %d", g_p_NTP_settings_ROM->T_syncNTP);
 	// rsdebugDln("timezone: %d", g_p_NTP_settings_ROM->timezone);
 	// rsdebugDln("serversNTP[%d]: %s", NumServerNTP, g_p_NTP_settings_ROM->serversNTP[NumServerNTP]);
 
-	NTP.setInterval(g_p_NTP_settings_ROM->T_syncNTP); // в секундах период синхронизации
-	NTP.setNTPTimeout(NTP_TIMEOUT);					  // в миллисекундах таймаут ответа сервера NTP
+	NTP.setInterval(60 * g_p_NTP_settings_ROM->T_syncNTP); // период синхронизации в секундах - у нас в минутах
+	NTP.setNTPTimeout(NTP_TIMEOUT);						   // в миллисекундах таймаут ответа сервера NTP
 	NTP.begin(g_p_NTP_settings_ROM->serversNTP[NumServerNTP], g_p_NTP_settings_ROM->timezone, false /*переход на летнее/зимнее*/, minutesTimeZone);
-	// uint32_t Ttask_NTP = g_p_NTP_settings_ROM->Ttask;
-	// if (Ttask_NTP)
-	// {
 	ut_NTP.setInterval(g_p_NTP_settings_ROM->Ttask);
 	ut_NTP.enable();
-	// }
-	// else
-	// {
-	// 	ut_NTP.disable();
-	// }
-	// rsdebuglnF("OK");
-	// if (NowLoad)
-	// 	EmptyMemorySettingsNTP();
 }
 
 void cb_ut_NTP(void)

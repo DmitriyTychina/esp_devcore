@@ -30,14 +30,11 @@ struct s_all_settings_ROM
 {
     uint16_t crc;
     // uint16_t len;
-    // s_ethernet_settings_ROM ethernet_settings_ROM1;
     s_ethernet_settings_ROM ethernet_settings_ROM;
     s_NTP_settings_ROM NTP_settings_ROM;
-    // s_sys_settings_ROM sys_settings_ROM1;
     s_sys_settings_ROM sys_settings_ROM;
     // uint16_t crc3=1;
     // uint16_t crc2=0;
-    // s_NTC_settings_ROM NTC_settings_ROM;
 };
 
 extern s_all_settings_ROM *s1;
@@ -115,8 +112,6 @@ void calcCRC(void *p_struct, uint16_t len);
 union u_NeedSaveSettings
 {
     uint32_t all = 0;
-    struct s_of
-    {
         union u_sys
         {
             uint8_t all;
@@ -142,7 +137,6 @@ union u_NeedSaveSettings
             unsigned NTP : 1;
             // unsigned NTC : 1;
         } bit;
-    } of;
 };
 // #define isNSS_allRSDebug (NeedSaveSettings.of.sys.of.RSDebug != 0)
 // #define isNSS_allOTA (NeedSaveSettings.of.sys.of.OTA != 0)

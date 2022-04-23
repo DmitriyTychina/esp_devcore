@@ -40,9 +40,9 @@ void door_init(void)
 void refresh_state_door(bool _state_door)
 {
   state_door = _state_door;
-  e_IDDirTopic dir_topic[] = {_main_topic, _Devices, _Door, _Status};
+  e_IDDirTopic dirs_topic[] = {d_main_topic, d_devices, d_door, d_status};
   const char *chr_state_door = (_state_door ^ statedoor_openlevel) ? "open" : "close";
-  mqtt_publish(dir_topic, _Open, chr_state_door);
+  mqtt_publish(dirs_topic, v_open, chr_state_door);
   rsdebugInfln("Door[%s]", chr_state_door);
   // openlatch(); //test
 }
@@ -52,7 +52,7 @@ void latch_execute(bool start)
 {
   static uint32_t start_timer = 0;
   static e_state_latch state_latch = _IDLE;
-  e_IDDirTopic dir_topic[] = {_main_topic, _Devices, _Door, _Status};
+  e_IDDirTopic dirs_topic[] = {d_main_topic, d_devices, d_door, d_status};
   const char *chr_state_latch = NULL;
   if (start)
   {
@@ -103,7 +103,7 @@ void latch_execute(bool start)
   }
   if (chr_state_latch != NULL)
   {
-    mqtt_publish(dir_topic, _Latch, chr_state_latch);
+    mqtt_publish(dirs_topic, v_latch, chr_state_latch);
     rsdebugInfln("Latch[%s]", chr_state_latch);
     // rsdebugDnfln("start[%s]", start ? "1" : "0");
     // rsdebugDnfln("state_latch[%d]", state_latch);
@@ -113,7 +113,7 @@ void latch_execute(bool start)
 void cb_latch(void)
 {
   // rsdebugDnfln("cb_latch(void)");
-  e_IDDirTopic dir_topic[] = {_main_topic, _Devices, _Door, _Status};
+  e_IDDirTopic dirs_topic[] = {d_main_topic, d_devices, d_door, d_status};
   const char *chr_state_latch;
   if (state_latch)
   {
@@ -132,7 +132,7 @@ void cb_latch(void)
     p_ut_latch = NULL;
     chr_state_latch = "close";
   }
-  mqtt_publish(dir_topic, _Latch, chr_state_latch);
+  mqtt_publish(dirs_topic, v_latch, chr_state_latch);
   rsdebugInfln("Latch[%s]", chr_state_latch);
 }
 #endif
@@ -142,7 +142,7 @@ void cb_latch(void)
 void latch_start(void)
 {
   // rsdebugDnfln("latch_start(void)");
-  e_IDDirTopic dir_topic[] = {_main_topic, _Devices, _Door, _Status};
+  e_IDDirTopic dirs_topic[] = {d_main_topic, d_devices, d_door, d_status};
   const char *chr_state_latch = NULL;
   if (p_ut_latch)
   {
@@ -161,7 +161,7 @@ void latch_start(void)
   }
   if (chr_state_latch != NULL)
   {
-    mqtt_publish(dir_topic, _Latch, chr_state_latch);
+    mqtt_publish(dirs_topic, v_latch, chr_state_latch);
     rsdebugInfln("Latch[%s]", chr_state_latch);
   }
 }
@@ -202,10 +202,10 @@ void onStartMQTT_pub_door(void)
 {
   // rsdebugDnfln("onStartMQTT_pub_door");
   refresh_state_door();
-  e_IDDirTopic dir_topic[] = {_main_topic, _Devices, _Door, _Commands};
-  mqtt_publish_ok(dir_topic, _Latch);
-  dir_topic[3] = {_Status};
-  mqtt_publish(dir_topic, _Latch, "close");
+  e_IDDirTopic dirs_topic[] = {d_main_topic, d_devices, d_door, d_commands};
+  mqtt_publish_ok(dirs_topic, v_latch);
+  dirs_topic[3] = {d_status};
+  mqtt_publish(dirs_topic, v_latch, "close");
 }
 
 // USER_AREA_END****!!!!@@@@####$$$$%%%%^^^^

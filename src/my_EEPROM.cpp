@@ -5,7 +5,7 @@
 #include "my_debuglog.h"
 
 // bool NeedSaveSettings_NTP = false;
-union u_NeedSaveSettings NeedSaveSettings;
+u_NeedSaveSettings NeedSaveSettings;
 s_all_settings_ROM *s1;
 
 // ********************************************************************************
@@ -41,16 +41,6 @@ uint16_t CRC16(void *pData, uint16_t nCount)
 //     }
 // }
 
-// void Print_s_NTP_settings(s_NTP_settings_ROM *_s)
-// {
-//     rsdebugDln("serversNTP[0]: %s", _s->serversNTP[0]);
-//     rsdebugDln("serversNTP[1]: %s", _s->serversNTP[1]);
-//     rsdebugDln("serversNTP[2]: %s", _s->serversNTP[2]);
-//     rsdebugDln("T_syncNTP: %d", _s->T_syncNTP);
-//     rsdebugDln("timezone: %d", _s->timezone); //timezone
-//     rsdebugDln("Ttask: %d", _s->Ttask);
-// };
-
 // если данные в ROM не валидны - записываем "по-умолчанию"
 void ROMVerifySettingsElseSaveDefault(bool force)
 {
@@ -68,7 +58,7 @@ void ROMVerifySettingsElseSaveDefault(bool force)
     {
         // rsdebugDlnF("@4");
         rsdebugInfF("Проверяем CRC ROM");
-        rsdebugInfln("[%d]", len_all_settings_ROM);
+        rsdebugInfln("$%d", len_all_settings_ROM);
         // rsdebugInfln("ROM[%d]:%d", s1->len, len_all_settings_ROM);
         if (!force && compareCRC(_p_all_settings_ROM, len_all_settings_ROM)) // если данные в памяти валидны
         {
@@ -147,7 +137,7 @@ void LoadInMemorySettings(char *_name, void **p_MemorySettings, uint16_t _addr, 
     if (!*p_MemorySettings)
     {
         rsdebugInfF("Загружаем настройки ");
-        rsdebugInfln("%s из ROM: %d байт", _name, _size);
+        rsdebugInfln("%s из ROM$%d", _name, _size);
         // GetSettings(p_MemorySettings, _addr, _size);
         if (!*p_MemorySettings) // если нет указателя на структуру
         {
@@ -200,23 +190,23 @@ void LoadInMemorySettings(char *_name, void **p_MemorySettings, uint16_t _addr, 
 
 void EmptyMemorySettingsSys(bool force) // force=true для очистки памяти независимо от NeedSaveSettings.bit
 {
-    if (NeedSaveSettings.of.sys.of.OTA)
+    if (NeedSaveSettings.sys.of.OTA)
         rsdebugInflnF("Перед очищением Sys: OTA не сохранены");
-    if (NeedSaveSettings.of.sys.of.RSDebug)
+    if (NeedSaveSettings.sys.of.RSDebug)
         rsdebugInflnF("Перед очищением Sys: RSDebug не сохранены");
-    if (NeedSaveSettings.of.sys.of.SysMon)
+    if (NeedSaveSettings.sys.of.SysMon)
         rsdebugInflnF("Перед очищением Sys: SysMon не сохранены");
-    if (force || !NeedSaveSettings.of.sys.all)
+    if (force || !NeedSaveSettings.sys.all)
     {
         if (g_p_sys_settings_ROM)
         {
-            rsdebugInfF("Очищаем память от настроек Sys: ");
-            rsdebugInfln("%d байт", len_sys_settings_ROM);
+            rsdebugInfF("Очищаем память от настроек Sys");
+            rsdebugInfln("$%d", len_sys_settings_ROM);
             // EmptySettingsSys(&g_p_sys_settings_ROM);
             // EmptySettings(g_p_sys_settings_ROM);
             delete g_p_sys_settings_ROM;
             g_p_sys_settings_ROM = NULL;
-            NeedSaveSettings.of.sys.all = 0;
+            NeedSaveSettings.sys.all = 0;
             // NeedSaveSettings.bit.OTA = false;
             // NeedSaveSettings.bit.RSDebug_T_task = false;
             // NeedSaveSettings.bit.SysMon = false;
@@ -237,23 +227,23 @@ void EmptyMemorySettingsSys(bool force) // force=true для очистки па
 
 void EmptyMemorySettingsEthernet(bool force) // force=true для очистки памяти независимо от NeedSaveSettings.bit
 {
-    if (NeedSaveSettings.of.bit.WIFI)
+    if (NeedSaveSettings.bit.WIFI)
         rsdebugInflnF("Перед очищением настроек связи: WIFI не сохранены");
-    if (NeedSaveSettings.of.bit.MQTT)
+    if (NeedSaveSettings.bit.MQTT)
         rsdebugInflnF("Перед очищением настроек связи: MQTT не сохранены");
-    if (force || (!NeedSaveSettings.of.bit.WIFI && !NeedSaveSettings.of.bit.MQTT))
+    if (force || (!NeedSaveSettings.bit.WIFI && !NeedSaveSettings.bit.MQTT))
     {
         if (g_p_ethernet_settings_ROM)
         {
-            rsdebugInfF("Очищаем память от настроек связи: ");
-            rsdebugInfln("%d байт", len_ethernet_settings_ROM);
+            rsdebugInfF("Очищаем память от настроек связи");
+            rsdebugInfln("$%d", len_ethernet_settings_ROM);
             // EmptySettingsEthernet(&g_p_ethernet_settings_ROM);
             // EmptySettings(g_p_ethernet_settings_ROM);
             delete g_p_ethernet_settings_ROM;
             g_p_ethernet_settings_ROM = NULL;
 
-            NeedSaveSettings.of.bit.WIFI = false;
-            NeedSaveSettings.of.bit.MQTT = false;
+            NeedSaveSettings.bit.WIFI = false;
+            NeedSaveSettings.bit.MQTT = false;
         }
     }
 }
@@ -273,17 +263,17 @@ void EmptyMemorySettingsNTP(bool force) // force=true для очистки па
 {
     if (g_p_NTP_settings_ROM)
     {
-        if (NeedSaveSettings.of.bit.NTP)
+        if (NeedSaveSettings.bit.NTP)
             rsdebugInflnF("Перед очищением NTP: NTP не сохранены");
-        if (force || !NeedSaveSettings.of.bit.NTP)
+        if (force || !NeedSaveSettings.bit.NTP)
         {
-            rsdebugInfF("Очищаем память от настроек NTP: ");
-            rsdebugInfln("%d байт", len_NTP_settings_ROM);
+            rsdebugInfF("Очищаем память от настроек NTP");
+            rsdebugInfln("$%d", len_NTP_settings_ROM);
             // EmptySettingsNTP(&g_p_NTP_settings_ROM);
             // EmptySettings(g_p_NTP_settings_ROM);
             delete g_p_NTP_settings_ROM;
             g_p_NTP_settings_ROM = NULL;
-            NeedSaveSettings.of.bit.NTP = false;
+            NeedSaveSettings.bit.NTP = false;
         }
     }
 }
@@ -312,33 +302,33 @@ bool SaveAllSettings(void)
         if (_p_all_settings_ROM) // если нет указателя
         {
             rsdebugInflnF("Сохраняем все данные:");
-            rsdebugDnfln("bit.RSDebug: %d", NeedSaveSettings.of.sys.of.RSDebug);
-            rsdebugDnfln("bit.OTA: %d", NeedSaveSettings.of.sys.of.OTA);
-            rsdebugDnfln("bit.SysMon: %d", NeedSaveSettings.of.sys.of.SysMon);
-            verifyErrorNeedSaveSettings("RSDebug", NeedSaveSettings.of.sys.of.RSDebug, g_p_sys_settings_ROM);
-            verifyErrorNeedSaveSettings("OTA", NeedSaveSettings.of.sys.of.OTA, g_p_sys_settings_ROM);
-            verifyErrorNeedSaveSettings("SysMon", NeedSaveSettings.of.sys.of.SysMon, g_p_sys_settings_ROM);
-            if (NeedSaveSettings.of.sys.all)
+            rsdebugDnfln("bit.RSDebug: %d", NeedSaveSettings.sys.of.RSDebug);
+            rsdebugDnfln("bit.OTA: %d", NeedSaveSettings.sys.of.OTA);
+            rsdebugDnfln("bit.SysMon: %d", NeedSaveSettings.sys.of.SysMon);
+            verifyErrorNeedSaveSettings("RSDebug", NeedSaveSettings.sys.of.RSDebug, g_p_sys_settings_ROM);
+            verifyErrorNeedSaveSettings("OTA", NeedSaveSettings.sys.of.OTA, g_p_sys_settings_ROM);
+            verifyErrorNeedSaveSettings("SysMon", NeedSaveSettings.sys.of.SysMon, g_p_sys_settings_ROM);
+            if (NeedSaveSettings.sys.all)
             {
                 LoadInMemorySettingsSys();
                 rsdebugDnflnF("Сохраняем данные SYS");
                 memcpy(&_p_all_settings_ROM->sys_settings_ROM, g_p_sys_settings_ROM, len_sys_settings_ROM);
                 EmptyMemorySettingsSys(true);
             }
-            rsdebugDnfln("bit.WIFI: %s", NeedSaveSettings.of.bit.WIFI ? "1" : "0");
-            rsdebugDnfln("bit.MQTT: %s", NeedSaveSettings.of.bit.MQTT ? "1" : "0");
-            verifyErrorNeedSaveSettings("WiFi", NeedSaveSettings.of.bit.WIFI, g_p_ethernet_settings_ROM);
-            verifyErrorNeedSaveSettings("MQTT", NeedSaveSettings.of.bit.MQTT, g_p_ethernet_settings_ROM);
-            if (NeedSaveSettings.of.bit.WIFI || NeedSaveSettings.of.bit.MQTT)
+            rsdebugDnfln("bit.WIFI: %s", NeedSaveSettings.bit.WIFI ? "1" : "0");
+            rsdebugDnfln("bit.MQTT: %s", NeedSaveSettings.bit.MQTT ? "1" : "0");
+            verifyErrorNeedSaveSettings("WiFi", NeedSaveSettings.bit.WIFI, g_p_ethernet_settings_ROM);
+            verifyErrorNeedSaveSettings("MQTT", NeedSaveSettings.bit.MQTT, g_p_ethernet_settings_ROM);
+            if (NeedSaveSettings.bit.WIFI || NeedSaveSettings.bit.MQTT)
             {
                 LoadInMemorySettingsEthernet();
                 rsdebugDnflnF("Сохраняем данные ethernet");
                 memcpy(&_p_all_settings_ROM->ethernet_settings_ROM, g_p_ethernet_settings_ROM, len_ethernet_settings_ROM);
                 EmptyMemorySettingsEthernet(true);
             }
-            rsdebugDnfln("bit.NTP: %s", NeedSaveSettings.of.bit.NTP ? "1" : "0");
-            verifyErrorNeedSaveSettings("NTP", NeedSaveSettings.of.bit.NTP, g_p_NTP_settings_ROM);
-            if (NeedSaveSettings.of.bit.NTP)
+            rsdebugDnfln("bit.NTP: %s", NeedSaveSettings.bit.NTP ? "1" : "0");
+            verifyErrorNeedSaveSettings("NTP", NeedSaveSettings.bit.NTP, g_p_NTP_settings_ROM);
+            if (NeedSaveSettings.bit.NTP)
             {
                 LoadInMemorySettingsNTP();
                 rsdebugDnflnF("Сохраняем данные NTP");

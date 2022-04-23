@@ -19,25 +19,26 @@ char last_payload[24];
 
 const s_SubscribeElement _arr_SubscribeElement[] = {
 /* _NTC */
-// {{_main_topic, _Devices, _NTC, _Settings}, _all, 0, &MQTT_com_NTC_Settings},
+// {{d_main_topic, d_devices, _NTC, d_settings}, v_all, 0, &MQTT_com_NTC_Settings},
 
-// {{_main_topic, _Settings, _RSdebug, d_empty}, _all, 0, &MQTT_com_Settings}, // для создания структуры CommandsDebug - read
-// {{_main_topic, _Settings, _SysMon, d_empty}, _all, 0, &MQTT_com_Settings},  // для создания структуры CommandsDebug - read
-// {{_main_topic, _Settings, _OTA, d_empty}, _all, 0, &MQTT_com_Settings},     // для создания структуры CommandsDebug - read
-// {{_main_topic, _Settings, _NTP, d_empty}, _all, 0, &MQTT_com_Settings},     // для создания структуры CommandsDebug - read
-// {{_main_topic, _Settings, _MQTT, d_empty}, _all, 0, &MQTT_com_Settings},    // для создания структуры CommandsDebug - read
-// {{_main_topic, _Settings, _WIFI, d_empty}, _all, 0, &MQTT_com_Settings},    // для создания структуры CommandsDebug - read
+// {{d_main_topic, d_settings, d_rs_debug, d_empty}, v_all, 0, &MQTT_com_Settings}, // для создания структуры CommandsDebug - read
+// {{d_main_topic, d_settings, d_sysmon, d_empty}, v_all, 0, &MQTT_com_Settings},  // для создания структуры CommandsDebug - read
+// {{d_main_topic, d_settings, d_ota, d_empty}, v_all, 0, &MQTT_com_Settings},     // для создания структуры CommandsDebug - read
+// {{d_main_topic, d_settings, d_ntp, d_empty}, v_all, 0, &MQTT_com_Settings},     // для создания структуры CommandsDebug - read
+// {{d_main_topic, d_settings, d_mqtt, d_empty}, v_all, 0, &MQTT_com_Settings},    // для создания структуры CommandsDebug - read
+// {{d_main_topic, d_settings, d_wifi, d_empty}, v_all, 0, &MQTT_com_Settings},    // для создания структуры CommandsDebug - read
 #ifdef USER_AREA
     // ****!!!!@@@@####$$$$%%%%^^^^USER_AREA_BEGIN
-    {{_main_topic, _Devices, _Door, _Commands}, _Latch, 0, &cb_MQTT_com_Door},
+    {{d_main_topic, d_devices, d_door, d_commands}, v_latch, 0, &cb_MQTT_com_Door},
 // USER_AREA_END****!!!!@@@@####$$$$%%%%^^^^
 #endif // USER_AREA
-    // {{_main_topic, _Settings, d_empty, d_empty}, _Debug, 0, &cb_MQTT_com_Settings},
-    // {{_main_topic, _Settings, d_empty, d_empty}, _ReadDflt, 0, &cb_MQTT_com_Settings},
-    // {{_main_topic, _Settings, d_empty, d_empty}, _ReadCrnt, 0, &cb_MQTT_com_Settings},
-    // {{_main_topic, _Settings, d_empty, d_empty}, _Edit, 0, &cb_MQTT_com_Settings},
-    // {{_main_topic, _Settings, d_empty, d_empty}, _Save, 0, &cb_MQTT_com_Settings},
-    {{_main_topic, _Settings, d_empty, d_empty}, _all, 0, &cb_MQTT_com_Settings},
+    // {{d_main_topic, d_settings, d_empty, d_empty}, _Debug, 0, &cb_MQTT_com_Settings},
+    {{d_main_topic, d_info, d_empty, d_empty}, vc_Read, 0, &cb_MQTT_com_Info},
+    // {{d_main_topic, d_settings, d_empty, d_empty}, _ReadDflt, 0, &cb_MQTT_com_Settings},
+    // {{d_main_topic, d_settings, d_empty, d_empty}, _ReadCrnt, 0, &cb_MQTT_com_Settings},
+    // {{d_main_topic, d_settings, d_empty, d_empty}, _Edit, 0, &cb_MQTT_com_Settings},
+    // {{d_main_topic, d_settings, d_empty, d_empty}, _Save, 0, &cb_MQTT_com_Settings},
+    {{d_main_topic, d_settings, d_empty, d_empty}, v_all, 0, &cb_MQTT_com_Settings},
 };
 
 WiFiClient net;
@@ -89,8 +90,8 @@ void onStartMQTT(void)
 #endif
   // rsdebugInflnF("onStartMQTT");
   mqtt_count_conn++;
-  rsdebugInfF(" - подключились к MQTT ");
-  rsdebugInfln("%d раз", mqtt_count_conn);
+  rsdebugInfF(" -подключились к MQTT №");
+  rsdebugInfln("%d", mqtt_count_conn);
   // создаем очереди входящих сообщений подписок
   // if (!p_Queue_MQTT) // если нет указателя
   //   p_Queue_MQTT = new CirQueue(size_Queue_MQTT, sizeof(s_element_MQTT));
@@ -98,59 +99,18 @@ void onStartMQTT(void)
   //   rsdebugElnF("p_Queue_MQTT: нет памяти");
 
   // публикуем при подключении
-  e_IDDirTopic dir_topic[] = {_main_topic, _Info, d_empty, d_empty};
-  // station_config config_tmp;
-  // wifi_station_get_config(&config_tmp);
-  // mqtt_publish(dir_topic, _CurrentWiFiAP, (const char *)config_tmp.ssid);
-  mqtt_publish(dir_topic, _CurrentWiFiAP, WiFi.SSID().c_str());
-  mqtt_publish(dir_topic, _CurrentIP, WiFi.localIP().toString().c_str());
-  mqtt_publish(dir_topic, _CntReconnWiFi, (uint32_t)wifi_count_conn);
-  mqtt_publish(dir_topic, _CntReconnMQTT, (uint32_t)mqtt_count_conn);
-#ifdef USER_AREA
-  // ****!!!!@@@@####$$$$%%%%^^^^USER_AREA_BEGIN
-  onStartMQTT_pub_door();
-// USER_AREA_END****!!!!@@@@####$$$$%%%%^^^^
-#endif // USER_AREA
-
-  // только после сброса
-  if (wifi_count_conn == 1)
-  {
-    mqtt_publish(dir_topic, _ReasonReset, get_glob_reason(false).c_str());
-    dir_topic[1] = _Settings;
-    // mqtt_publish_no(dir_topic, _Edit);
-    mqtt_publish_no(dir_topic, _ReadCrnt);
-    mqtt_publish_no(dir_topic, _ReadDflt);
-    mqtt_publish_ok(dir_topic, _Save);
-    mqtt_publish_ok(dir_topic, _Debug);
-#ifdef USER_AREA
-    // ****!!!!@@@@####$$$$%%%%^^^^USER_AREA_BEGIN
-// USER_AREA_END****!!!!@@@@####$$$$%%%%^^^^
-#endif // USER_AREA
-    // MQTT_pub_Commands_ok(_SaveSettings);
-    // mqtt_publish(dir_topic, _TimeReset, NTP.getTimeDateString(NTP.getLastBootTime()).c_str());
-  }
+  MQTT_pub_allInfo(wifi_count_conn == 1);
 
   // подписываемся на все из массива _arr_SubscribeElement
-  // client.setTimeout(1000);
   rsdebugInflnF("Подписываемся:");
   for (uint8 i = 0; i < (sizeof(_arr_SubscribeElement) / sizeof(_arr_SubscribeElement[0])); i++)
   {
-
     mqtt_subscribe(_arr_SubscribeElement[i]);
-    // String topic = CreateTopic((e_IDDirTopic *)_arr_SubscribeElement[i].IDDirTopic, (e_IDVarTopic)_arr_SubscribeElement[i].IDVarTopic);
-    // // if (mqtt_count_conn > 1) // сначала отписываемся если переподключились к MQTT - это ненужно
-    // // {
-    // //   rsdebugDnfln("- %s", topic.c_str());
-    // //   client.unsubscribe(topic.c_str());
-    // // }
-    // rsdebugDnfln("+ %s", topic.c_str());
-    // client.subscribe(topic.c_str(), _arr_SubscribeElement[i].mqttQOS);
   }
 
   // запускаем задачи переодической публикации
 
   // запускаем "задачи" публикации по событию
-  MQTT_pub_Info_TimeReset();
 }
 
 // void onStopMQTT(void) // отключились от MQTT
@@ -173,7 +133,7 @@ void onStartMQTT(void)
 
 void StartMqtt()
 {
-  rsdebugInflnF("StartMqtt");
+  rsdebugInflnF("---StartMqtt");
   MQTT_state = _MQTT_disconnected;
   // rsdebugDnflnF("StartMqtt@1");
   ut_MQTT.forceNextIteration();
@@ -184,7 +144,7 @@ void StartMqtt()
 
 void StopMqtt()
 {
-  rsdebugInflnF("StopMqtt");
+  rsdebugInflnF("---StopMqtt");
   // client.disconnect();
   ut_MQTT.disable();
 }
@@ -238,7 +198,8 @@ void onMessageReceived(char *topic, char *payload, AsyncMqttClientMessagePropert
   memcpy(tmp_payload, payload, len);
   tmp_payload[len] = 0;
   s_element_MQTT in_element = {topic, tmp_payload};
-  // rsdebugDnfln("MQTT incoming: %s[%s]", topic, tmp_payload);
+  rsdebugDnfF("MQTT incoming: ");
+  rsdebugDnfln("%s<%s>", topic, tmp_payload);
   if (!strcmp(last_topic, topic) && !strcmp(last_payload, tmp_payload))
   {
     rsdebugWnflnF("Duplicate !!!!");
@@ -255,7 +216,7 @@ void onMessageReceived(char *topic, char *payload, AsyncMqttClientMessagePropert
     // uint8_t n = sizeof(_arr_SubscribeElement) / sizeof(_arr_SubscribeElement[0]);
     for (uint8_t i = 0; i < (sizeof(_arr_SubscribeElement) / sizeof(_arr_SubscribeElement[0])); i++)
     {
-      if (_arr_SubscribeElement[i].IDVarTopic == _all)
+      if (_arr_SubscribeElement[i].IDVarTopic == v_all)
       {
         topic_DB = CreateTopic((e_IDDirTopic *)_arr_SubscribeElement[i].IDDirTopic, v_empty);
         topic_in.remove(topic_DB.length());
@@ -275,7 +236,7 @@ void onMessageReceived(char *topic, char *payload, AsyncMqttClientMessagePropert
         }
       // topic_DB = CreateTopic((e_IDDirTopic *)_arr_SubscribeElement[i].IDDirTopic, _arr_SubscribeElement[i].IDVarTopic);
       // // topic = topic_in;
-      // if (_arr_SubscribeElement[i].IDVarTopic == _all)
+      // if (_arr_SubscribeElement[i].IDVarTopic == v_all)
       // {
       //   uint16_t pos = topic_DB.length() - 2;
       //   topic_DB.remove(pos);
@@ -299,7 +260,7 @@ void onMessageReceived(char *topic, char *payload, AsyncMqttClientMessagePropert
 void mqtt_init(uint8_t _idx)
 {
   LoadInMemorySettingsEthernet();
-  rsdebugInflnF("MQTTinit");
+  rsdebugInflnF("---MQTTinit");
   // for (uint8_t aaa = 0; aaa < 5; aaa++)
   //   rsdebugInfln("------%s %d", g_p_ethernet_settings_ROM->settings_serv[aaa].MQTTip, aaa);
   if (mqtt_count_conn == 0)
@@ -321,13 +282,13 @@ void mqtt_init(uint8_t _idx)
 
 void onMqttConnect(bool sessionPresent)
 {
-  rsdebugDnfln("onMqttConnect[%d]", (uint8_t)sessionPresent);
+  // rsdebugDnfln("onMqttConnect[%d]", (uint8_t)sessionPresent);
   // if (MQTT_state != _MQTT_connected)
   // {
-    LoadInMemorySettingsEthernet();
-    ut_MQTT.setInterval(g_p_ethernet_settings_ROM->MQTT_Ttask);
-    ut_MQTT.forceNextIteration();
-    MQTT_state = _MQTT_on_connected;
+  LoadInMemorySettingsEthernet();
+  ut_MQTT.setInterval(g_p_ethernet_settings_ROM->MQTT_Ttask);
+  ut_MQTT.forceNextIteration();
+  MQTT_state = _MQTT_on_connected;
   // }
 }
 
@@ -362,8 +323,8 @@ void cb_ut_MQTT()
         {
           _idx--;
           mqtt_init(_idx);
-          rsdebugInfF("Подключаемся к MQTT серверу: ");
-          rsdebugInfln("%s[%d]", g_p_ethernet_settings_ROM->settings_serv[_idx].MQTTip, _idx);
+          rsdebugInfF("Подключаемся к MQTT серверу");
+          rsdebugInfln("[%d]:%s", _idx, g_p_ethernet_settings_ROM->settings_serv[_idx].MQTTip);
           MQTT_state = _MQTT_connecting;
         }
         else
@@ -401,8 +362,8 @@ void cb_ut_MQTT()
         // uint8_t n = sizeof(_arr_SubscribeElement) / sizeof(_arr_SubscribeElement[0]);
         for (uint8_t i = 0; i < sizeof(_arr_SubscribeElement) / sizeof(_arr_SubscribeElement[0]); i++)
         {
-          // if ((_arr_SubscribeElement[i].IDVarTopic == _all) && (topic_in.length() >= topic_DB.length() - 2))
-          if (_arr_SubscribeElement[i].IDVarTopic == _all)
+          // if ((_arr_SubscribeElement[i].IDVarTopic == v_all) && (topic_in.length() >= topic_DB.length() - 2))
+          if (_arr_SubscribeElement[i].IDVarTopic == v_all)
           {
             rsdebugDnfF("^");
             topic_DB = CreateTopic((e_IDDirTopic *)_arr_SubscribeElement[i].IDDirTopic, v_empty);
@@ -496,7 +457,8 @@ void mqtt_publish(e_IDDirTopic *_IDDirTopic, e_IDVarTopic _IDVarTopic, const cha
 void mqtt_publish(const char *_topic, const char *_payload)
 {
   client.publish(_topic, 0, false, _payload);
-  rsdebugInfln("MQTT pub: %s[%s]", _topic, _payload);
+  rsdebugInfF("MQTT pub: ");
+  rsdebugInfln("%s<%s>", _topic, _payload);
 }
 
 void mqtt_publish_ok(e_IDDirTopic *_IDDirTopic, e_IDVarTopic _IDVarTopic)
