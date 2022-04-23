@@ -10,7 +10,7 @@
 +- mqtt_com оптимизация +bugfix
 RAM:   [====      ]  40.6% (used 33244 bytes from 81920 bytes)
 Flash: [====      ]  35.5% (used 371180 bytes from 1044464 bytes)
-#2
+#2 +settingsNTP +bugfix +optimise debug print
 +- оптимизация вывода инфы: в ущерб flash, в пользу RAM
 RAM:   [====      ]  40.3% (used 32988 bytes from 81920 bytes)
 Flash: [====      ]  35.6% (used 372256 bytes from 1044464 bytes)
