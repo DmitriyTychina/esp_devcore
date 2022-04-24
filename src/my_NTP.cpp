@@ -23,9 +23,9 @@ s_NTP_settings_ROM *g_p_NTP_settings_ROM = NULL;
 
 void processSyncEvent(NTPSyncEvent_t _ntpEvent)
 {
-	LoadInMemorySettingsNTP();
 	if (_ntpEvent < 0)
 	{
+	LoadInMemorySettingsNTP();
 		if (++cnt_errorNTP > qnt_errorNTP)
 		{
 			cnt_errorNTP = 0;
@@ -49,7 +49,7 @@ void processSyncEvent(NTPSyncEvent_t _ntpEvent)
 		rsdebugInfF("Got NTP time: ");
 		rsdebugInfln("%s", NTP.getTimeDateString(NTP.getLastNTPSync()).c_str());
 		rsdebugInfF("ServerNTP");
-		rsdebugInfln("[%d]:%s", NumServerNTP, g_p_NTP_settings_ROM->serversNTP[NumServerNTP]);
+		rsdebugInfln("[%d]:%s", NumServerNTP, NTP.getNtpServerName().c_str());
 		rsdebugInfF("Uptime: ");
 		rsdebugInfln("%s since %s", NTP.getUptimeString().c_str(), NTP.getTimeDateString(NTP.getFirstSync()).c_str());
 		// EmptyMemorySettingsNTP();
