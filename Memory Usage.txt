@@ -17,3 +17,8 @@ Flash: [====      ]  35.6% (used 372256 bytes from 1044464 bytes)
 + mqtt_com - обработка настроек NTP + Modify_num() + Modify_bool() +bugfix
 RAM:   [====      ]  40.3% (used 32988 bytes from 81920 bytes)
 Flash: [====      ]  35.7% (used 373184 bytes from 1044464 bytes)
+FreeRAM: 35296-35672
+#3 NTP не загружает в память натройки при синхронизации
++- my_NTP +optimize dynamic RAM
+RAM:   [====      ]  40.3% (used 32988 bytes from 81920 bytes)
+Flash: [====      ]  35.7% (used 373232 bytes from 1044464 bytes)
