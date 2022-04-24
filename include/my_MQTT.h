@@ -1,5 +1,4 @@
-#ifndef my_MQTT_h
-#define my_MQTT_h
+#pragma once
 
 #include <Arduino.h>
 #include <ESP8266WiFi.h>
@@ -219,60 +218,36 @@ struct s_element_MQTT
 
 enum e_state_MQTT : uint8_t
 {
-    _MQTT_disconnected, // отключены
-    _MQTT_connecting,   // подключение
-    _MQTT_on_connected, // подключились
-    _MQTT_connected     // подключены
+    _MQTT_on_disconnected, // отключились
+    _MQTT_disconnected,    // отключены
+    _MQTT_connecting,      // подключение
+    _MQTT_on_connected,    // подключились
+    _MQTT_connected        // подключены
 };
 extern e_state_MQTT MQTT_state;  // Состояние подключения к MQTT
 extern uint16_t mqtt_count_conn; // количество (пере)подключений к серверу mqtt
 // extern uint8_t idx_eth_rom; // номер записи в g_p_ethernet_settings_ROM - для получения адреса сервера MQTT
 
-typedef void (*t_Callback)(s_element_MQTT);
-#define size_IDDirTopic 4
-struct s_SubscribeElement
-{
-    e_IDDirTopic IDDirTopic[size_IDDirTopic];
-    e_IDVarTopic IDVarTopic;
-    uint8_t mqttQOS;
-    t_Callback Callback;
-};
-
 void mqtt_init(uint8_t _idx);
+void cb_ut_MQTT();
+void StartMqtt(void);
+void StopMqtt(void);
+void onMqttConnect(bool sessionPresent);
+void onMqttDisconnect(AsyncMqttClientDisconnectReason reason);
+void MQTTconnected(void);
+// void MQTTdisconnected(void);
 void onMqttConnect(bool sessionPresent);
 void onMqttDisconnect(AsyncMqttClientDisconnectReason reason);
 
-void StartMqtt(void);
-void StopMqtt(void);
-void cb_ut_MQTT();
 // void t_publicMQTT_cb(void);
 // void t_queueMQTTsub_cb(void);
-
-void mqtt_publish(e_IDDirTopic *_IDDirTopic, e_IDVarTopic _IDVarTopic, int32_t payload);
-void mqtt_publish(e_IDDirTopic *_IDDirTopic, e_IDVarTopic _IDVarTopic, uint32_t payload);
-void mqtt_publish(e_IDDirTopic *_IDDirTopic, e_IDVarTopic _IDVarTopic, float payload, const char *format = "%.2f");
-void mqtt_publish(e_IDDirTopic *_IDDirTopic, e_IDVarTopic _IDVarTopic, bool payload);
-// void mqtt_publish(e_IDDirTopic *_IDDirTopic, e_IDVarTopic _IDVarTopic, float payload);
-void mqtt_publish(e_IDDirTopic *_IDDirTopic, e_IDVarTopic _IDVarTopic, const char *payload);
-void mqtt_publish(const char *_topic, const char *_payload);
-void mqtt_publish_ok(e_IDDirTopic *_IDDirTopic, e_IDVarTopic _IDVarTopic);
-void mqtt_publish_no(e_IDDirTopic *_IDDirTopic, e_IDVarTopic _IDVarTopic);
 
 // bool mqtt_status();
 // void mqtt_callback(char *topic, uint8_t *payload, unsigned int length);
 
 // bool char_strs_mqtt_is_equal(const char *char_str1, const char *char_str2);
-bool is_equal_ok(const char *char_str);
-bool is_equal_no(const char *char_str);
-bool is_equal_enable(const char *char_str);
-bool is_equal_disable(const char *char_str);
 
 String CreateTopic(e_IDDirTopic *_IDDirTopic, e_IDVarTopic _IDVarTopic);
 // void CreateTopic(char *result, e_IDDirTopic _IDDirTopic, e_IDVarTopic _IDVarTopic);
 
-void mqtt_subscribe(s_SubscribeElement _sub_element);
-void mqtt_unsubscribe(s_SubscribeElement _sub_element);
-
 extern AsyncMqttClient client;
-
-#endif // my_MQTT_h

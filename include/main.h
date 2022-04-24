@@ -1,5 +1,4 @@
-#ifndef main_h
-#define main_h
+#pragma once
 
 #include <Arduino.h>
 #include "device_def.h"
@@ -18,7 +17,7 @@
 #include "my_door.h"
 // USER_AREA_END****!!!!@@@@####$$$$%%%%^^^^
 #endif // USER_AREA
-String get_glob_reason(bool wait);
+String get_glob_reason(bool wait = false);
 
 // Глобальные переменные для постоянного хранения в памяти
 // extern uint8 glob_reason;        // причина сброса
@@ -262,5 +261,3 @@ extern e_state_WiFi wifi_state; // Состояние WIFi
 //     int v_cntr_out;         // текущий расход воды из бочки
 //     long v_summ_out;        // слито воды из бочки
 // } s_voda;
-
-#endif // main_h

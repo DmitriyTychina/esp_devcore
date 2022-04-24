@@ -1,5 +1,4 @@
-#ifndef my_wifi_h
-#define my_wifi_h
+#pragma once
 
 #include <Arduino.h>
 #include <ESP8266WiFi.h>
@@ -69,5 +68,3 @@ uint8_t get_idx_eth(String str_ssid);
 void cb_ut_state_wifi(void);
 
 extern s_ethernet_settings_ROM *g_p_ethernet_settings_ROM;
-
-#endif // my_wifi_h

@@ -24,8 +24,10 @@ String get_glob_reason(bool _wait)
   rst_info *p_rst_info;
   p_rst_info = system_get_rst_info(); // причина сброса
   uint8 glob_reason = p_rst_info->reason;
-  if (_wait & (glob_reason != REASON_DEFAULT_RST) & (glob_reason != REASON_EXT_SYS_RST) & (glob_reason != REASON_SOFT_RESTART /* после прошивки OTA */))
+  if (_wait && (glob_reason != REASON_DEFAULT_RST) && (glob_reason != REASON_EXT_SYS_RST) && (glob_reason != REASON_SOFT_RESTART /* после прошивки OTA */))
+  {
     os_delay_us(500000); // чтобы при "непонятных" сбросах данные не мелькали в serial-порту
+  }
   String tmp_str;
   switch (glob_reason)
   {
@@ -68,9 +70,9 @@ volatile unsigned long uTask::iCPUCore = 0;
 volatile unsigned long uTask::iCPUTT = 0;
 
 // ****************** Независимые задачи
-uTask ut_wifi(WiFi_TtaskDefault, &cb_ut_state_wifi);      // Подключение к wifi
-uTask ut_sysmon(SysMon_TtaskDefault, &cb_ut_sysmon);      // sysmon
-uTask ut_debuglog(RSDebug_TtaskDefault, &cb_ut_debuglog); // RSDedug
+uTask ut_wifi(WiFi_TtaskDefault, &cb_ut_state_wifi);                      // Подключение к wifi
+uTask ut_sysmon(SysMon_TtaskDefault, &cb_ut_sysmon);                      // sysmon
+uTask ut_debuglog(RSDebug_TtaskDefault, &cb_ut_debuglog);                 // RSDedug
 uTask ut_emptymemory(emptymemory_TtaskDefault, &cb_ut_emptymemory, true); // автоматически очищаем память
 
 #ifdef USER_AREA

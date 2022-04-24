@@ -2,7 +2,7 @@
 // #include <NtpClientLib.h>
 #include <EEPROM.h>
 
-#include "MQTT_pub.h"
+#include "my_MQTT_pub.h"
 #include "my_debuglog.h"
 #include "my_EEPROM.h"
 #include "my_wifi.h"
@@ -102,19 +102,6 @@ void MQTT_pub_allSettings(bool fromROM)
        // MQTT_pub_Settings_ok(_Save);
 }
 
-// void MQTT_pub_Commands_ok(e_IDVarTopic _IDVarTopic)
-// {
-//   e_IDDirTopic dirs_topic[] = {d_main_topic, d_commands, d_empty, d_empty};
-//   // mqtt_publish(dirs_topic, _IDVarTopic, "ok");
-//   mqtt_publish_ok(dirs_topic, _IDVarTopic);
-// }
-
-// void MQTT_pub_Settings_ok(e_IDVarTopic _IDVarTopic)
-// {
-//   e_IDDirTopic dirs_topic[] = {d_main_topic, d_settings, d_empty, d_empty};
-//   mqtt_publish(dirs_topic, _IDVarTopic, "ok");
-// }
-
 void MQTT_pub_Info_TimeReset(void)
 {
   e_IDDirTopic dirs_topic[] = {d_main_topic, d_info, d_empty, d_empty};
@@ -139,7 +126,7 @@ void MQTT_pub_allInfo(bool reset)
   // только после сброса
   if (reset)
   {
-    mqtt_publish(dirs_topic, v_reason_reset, get_glob_reason(false).c_str());
+    mqtt_publish(dirs_topic, v_reason_reset, get_glob_reason().c_str());
     dirs_topic[1] = d_settings;
     mqtt_publish_no(dirs_topic, vc_ReadCrnt);
     mqtt_publish_no(dirs_topic, vc_ReadDflt);
@@ -150,7 +137,82 @@ void MQTT_pub_allInfo(bool reset)
 // USER_AREA_END****!!!!@@@@####$$$$%%%%^^^^
 #endif // USER_AREA
   }
-
   MQTT_pub_Info_TimeReset();
   cb_ut_sysmon();
+}
+
+// void onMessagePublish(uint16_t packetId)
+// {
+// }
+
+void mqtt_publish(e_IDDirTopic *_IDDirTopic, e_IDVarTopic _IDVarTopic, bool _payload)
+{
+  // if (!client.connected())
+  //   return;
+  mqtt_publish(_IDDirTopic, _IDVarTopic, _payload ? "yes" : "no");
+}
+
+void mqtt_publish(e_IDDirTopic *_IDDirTopic, e_IDVarTopic _IDVarTopic, int32_t _payload)
+{
+  if (!client.connected())
+    return;
+  char msg[16];
+  sprintf(msg, "%d", _payload);
+  mqtt_publish(_IDDirTopic, _IDVarTopic, msg);
+}
+
+void mqtt_publish(e_IDDirTopic *_IDDirTopic, e_IDVarTopic _IDVarTopic, uint32_t _payload)
+{
+  if (!client.connected())
+    return;
+  char msg[16];
+  sprintf(msg, "%d", _payload);
+  mqtt_publish(_IDDirTopic, _IDVarTopic, msg);
+}
+
+void mqtt_publish(e_IDDirTopic *_IDDirTopic, e_IDVarTopic _IDVarTopic, float _payload, const char *_format)
+{
+  if (!client.connected())
+    return;
+  char msg[16];
+  sprintf(msg, _format, _payload);
+  mqtt_publish(_IDDirTopic, _IDVarTopic, msg);
+}
+
+// void mqtt_publish(e_IDDirTopic *_IDDirTopic, e_IDVarTopic _IDVarTopic, float payload)
+// {
+//   if (!client.connected())
+//     return;
+//   char msg[16];
+//   sprintf(msg, "%.2f", payload);
+//   mqtt_publish(_IDDirTopic, _IDVarTopic, msg);
+// }
+
+void mqtt_publish(e_IDDirTopic *_IDDirTopic, e_IDVarTopic _IDVarTopic, const char *_payload)
+{
+  if (!client.connected())
+    return;
+  String topic = CreateTopic(_IDDirTopic, _IDVarTopic);
+  mqtt_publish(topic.c_str(), _payload);
+}
+
+void mqtt_publish(const char *_topic, const char *_payload)
+{
+  if (!client.connected())
+    return;
+  // LedOn;
+  client.publish(_topic, 0, false, _payload);
+  rsdebugInfF("MQTT pub: ");
+  rsdebugInfln("%s<%s>", _topic, _payload);
+  // LedOff;
+}
+
+void mqtt_publish_ok(e_IDDirTopic *_IDDirTopic, e_IDVarTopic _IDVarTopic)
+{
+  mqtt_publish(_IDDirTopic, _IDVarTopic, "ok");
+}
+
+void mqtt_publish_no(e_IDDirTopic *_IDDirTopic, e_IDVarTopic _IDVarTopic)
+{
+  mqtt_publish(_IDDirTopic, _IDVarTopic, "no");
 }

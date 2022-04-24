@@ -1,5 +1,4 @@
-#ifndef my_door_h
-#define my_door_h
+#pragma once
 
 #include <Arduino.h>
 #include "device_def.h"
@@ -7,8 +6,8 @@
 #include "my_MQTT.h"
 #include "my_scheduler.h"
 // #include "main.h"
-// #include "MQTT_pub.h"
-// #include "MQTT_com.h"
+// #include "my_MQTT_pub.h"
+// #include "my_MQTT_sub.h"
 // #include "my_EEPROM.h"
 // #include "my_NTC.h"
 // #include "SensorData.h"
@@ -27,5 +26,3 @@ void latch_execute(void);
 void cb_ut_door(void);
 void cb_MQTT_com_Door(s_element_MQTT _element);
 void onStartMQTT_pub_door(void);
-
-#endif // my_door_h

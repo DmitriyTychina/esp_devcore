@@ -1,5 +1,5 @@
-#ifndef my_debuglog_h
-#define my_debuglog_h
+#pragma once
+
 #include <Arduino.h>
 #include "RSDebug.h"
 
@@ -26,5 +26,3 @@ inline void my_debuglog_print_free_memory()
     // // #define logdisable() all_param_RAM.log = false
     // #define loginit() ser.begin(115200)
     // // #define islogenable() all_param_RAM.log
-
-#endif // my_debuglog_h

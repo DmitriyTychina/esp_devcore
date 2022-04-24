@@ -1,5 +1,4 @@
-#ifndef my_EEPROM_h
-#define my_EEPROM_h
+#pragma once
 
 #include <Arduino.h>
 #include "main.h"
@@ -167,5 +166,3 @@ const uint16_t crc_tabl[] PROGMEM = {
 };
 
 #define BEGIN_CRC16 0xFFFF
-
-#endif // my_EEPROM_h

@@ -1,5 +1,4 @@
-#ifndef my_NTP_h
-#define my_NTP_h
+#pragma once
 
 // #include "global.h"
 #include <NtpClientLib.h>
@@ -20,5 +19,3 @@ void cb_ut_NTP(void);
 
 extern NTPClient NTP;
 extern s_NTP_settings_ROM *g_p_NTP_settings_ROM;
-
-#endif // my_time_h

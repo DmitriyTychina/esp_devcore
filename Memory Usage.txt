@@ -22,4 +22,5 @@ FreeRAM: 35296-35672
 +- my_NTP +optimize dynamic RAM
 RAM:   [====      ]  40.3% (used 32988 bytes from 81920 bytes)
 Flash: [====      ]  35.7% (used 373232 bytes from 1044464 bytes)
-FreeRAM: 35552-35736
+FreeRAM: 35552-35736-35760
+#4 pragma once in *.h, restrucrured f() in mqtt

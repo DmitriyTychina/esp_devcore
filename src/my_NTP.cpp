@@ -7,7 +7,7 @@
 #include "my_NTP.h"
 #include "my_debuglog.h"
 #include "my_EEPROM.h"
-#include "MQTT_pub.h"
+#include "my_MQTT_pub.h"
 
 boolean syncEventTriggered; // True if a time even has been triggered
 NTPSyncEvent_t ntpEvent;	// Last triggered event

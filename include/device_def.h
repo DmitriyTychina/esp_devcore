@@ -1,5 +1,4 @@
-#ifndef device_def_h
-#define device_def_h
+#pragma once
 
 #include "global_def.h"
 
@@ -46,5 +45,3 @@
 21  io3 rxd0                                                ***RX RS485
 22  io1 txd0                                                ***TX RS485
 */
-
-#endif // device_def_h

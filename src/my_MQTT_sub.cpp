@@ -6,14 +6,13 @@
 #include "my_EEPROM.h"
 #include "my_scheduler.h"
 #include "my_debuglog.h"
-#include "MQTT_pub.h"
-#include "MQTT_com.h"
+#include "my_MQTT_pub.h"
+#include "my_MQTT_sub.h"
 
 #ifdef USER_AREA
 // ****!!!!@@@@####$$$$%%%%^^^^USER_AREA_BEGIN
 // include
 #include "my_door.h"
-// #include "my_NTP.h"
 // USER_AREA_END****!!!!@@@@####$$$$%%%%^^^^
 #endif // USER_AREA
 
@@ -22,19 +21,131 @@
 #ifdef USER_AREA
 // ****!!!!@@@@####$$$$%%%%^^^^USER_AREA_BEGIN
 
-// void Modify_NTP_IP(const char *char_str, int _numIP)
-// {
-//     if (strcmp(char_str, g_p_NTP_settings_ROM->serversNTP[_numIP])) // если не совпадает
-//     {
-//         strcpy(g_p_NTP_settings_ROM->serversNTP[_numIP], char_str);
-//         NeedSaveSettings.bit.NTP = true;
-//         MQTT_pub_Info_NeedSaveSettings("NeedSave_NTP");
-//         init_NTP_with_WiFi();
-//     }
-// }
-
 // USER_AREA_END****!!!!@@@@####$$$$%%%%^^^^
 #endif // USER_AREA
+
+#ifdef MQTT_QUEUE
+#define size_Queue_MQTT 50 // Максимум 255
+// s_element_MQTT *p_element_MQTT;
+CirQueue p_Queue_MQTT(size_Queue_MQTT, sizeof(s_element_MQTT));
+#else
+char last_topic[80];
+char last_payload[24];
+#endif
+
+const s_SubscribeElement _arr_SubscribeElement[] = {
+// если подписаны на топик aaa/bbb/ccc который входит в подписку aaa/bbb/#, то его нужно поместить выше в массиве
+#ifdef USER_AREA
+    // ****!!!!@@@@####$$$$%%%%^^^^USER_AREA_BEGIN
+    {{d_main_topic, d_devices, d_door, d_commands}, v_latch, 0, &cb_MQTT_com_Door},
+// USER_AREA_END****!!!!@@@@####$$$$%%%%^^^^
+#endif // USER_AREA
+    // {{d_main_topic, d_settings, d_empty, d_empty}, _Debug, 0, &cb_MQTT_sub_Settings},
+    {{d_main_topic, d_info, d_empty, d_empty}, vc_Read, 0, &cb_MQTT_sub_Info},
+    // {{d_main_topic, d_settings, d_empty, d_empty}, _ReadDflt, 0, &cb_MQTT_sub_Settings},
+    // {{d_main_topic, d_settings, d_empty, d_empty}, _ReadCrnt, 0, &cb_MQTT_sub_Settings},
+    // {{d_main_topic, d_settings, d_empty, d_empty}, _Edit, 0, &cb_MQTT_sub_Settings},
+    // {{d_main_topic, d_settings, d_empty, d_empty}, _Save, 0, &cb_MQTT_sub_Settings},
+    {{d_main_topic, d_settings, d_empty, d_empty}, v_all, 0, &cb_MQTT_sub_Settings},
+};
+
+void onMessageReceived(char *topic, char *payload, AsyncMqttClientMessageProperties properties, size_t len, size_t index, size_t total)
+{
+#ifdef MQTT_QUEUE
+  char *_topic = new char[strlen(topic)];
+  strcpy(_topic, topic);
+  char *_payload = new char[len + 1];
+  memcpy(_payload, payload, len);
+  _payload[len] = 0;
+  s_element_MQTT in_element = {_topic, _payload};
+  // rsdebugDnfln("1topic[%s]", topic);
+  rsdebugDnfln("[%d]MQTT incoming: %s[%s][%d][%d][%d]", p_Queue_MQTT.isCount(), _topic, _payload, len, index, total);
+  if (p_Queue_MQTT.isFull())
+  {
+    rsdebugEnflnF("p_Queue_nCallback is full !!!!");
+  }
+  else
+  {
+    if (!p_Queue_MQTT.isEmpty())
+    {
+      // rsdebugDnflnF("@3");
+      s_element_MQTT *_element = (s_element_MQTT *)p_Queue_MQTT.peeklast();
+      // rsdebugDnflnF("@31");
+      // rsdebugDnfln("[%d]MQTT peeklast: %s[%s]", p_Queue_MQTT->isCount() - 1, _element->topic->c_str(), _element->payload->c_str());
+      // rsdebugDnfln("#1[%s][%d][%s][%d]", _element->topic, strlen(_element->topic), in_element.topic, strlen(_topic));
+      // rsdebugDnfln("#2[%s][%d][%s][%d]", _element->payload, strlen(_element->payload), in_element.payload, strlen(_payload));
+      // rsdebugDnflnF("@32");
+      // rsdebugInfln("FreeRAM1: %d", ESP.getFreeHeap());
+      if (!strcmp((*_element).topic, _topic) && !strcmp((*_element).payload, _payload))
+      {
+        rsdebugWnflnF("Duplicate !!!!");
+        delete _topic;
+        delete _payload;
+        // delete in_element;
+        return;
+      }
+      // rsdebugInfln("FreeRAM2: %d", ESP.getFreeHeap());
+    }
+    // {
+    // rsdebugDnflnF("@3");
+    // rsdebugInfln("FreeRAM3: %d", ESP.getFreeHeap());
+    p_Queue_MQTT.push((uint8_t *)&in_element);
+    // rsdebugInfln("FreeRAM4: %d", ESP.getFreeHeap());
+    ut_MQTT.forceNextIteration();
+  }
+#else
+  char tmp_payload[len + 1];
+  memcpy(tmp_payload, payload, len);
+  tmp_payload[len] = 0;
+  s_element_MQTT in_element = {topic, tmp_payload};
+  rsdebugDnfF("MQTT incoming: ");
+  rsdebugDnfln("%s<%s>", topic, tmp_payload);
+  if (!strcmp(last_topic, topic) && !strcmp(last_payload, tmp_payload))
+  {
+    rsdebugWnflnF("Duplicate !!!!");
+    return;
+  }
+  else
+  {
+    strcpy(last_topic, topic);
+    strcpy(last_payload, tmp_payload);
+    String topic_in, topic_DB;
+    topic_in = String(topic);
+    // payload_in = String(tmp_payload);
+    // uint8_t i;
+    // uint8_t n = sizeof(_arr_SubscribeElement) / sizeof(_arr_SubscribeElement[0]);
+    for (uint8_t i = 0; i < (sizeof(_arr_SubscribeElement) / sizeof(_arr_SubscribeElement[0])); i++)
+    {
+      if (_arr_SubscribeElement[i].IDVarTopic == v_all)
+      {
+        topic_DB = CreateTopic((e_IDDirTopic *)_arr_SubscribeElement[i].IDDirTopic, v_empty);
+        topic_in.remove(topic_DB.length());
+        // rsdebugDln("topic_in=%s, topic=%s, topic_DB=%s", topic_in.c_str(), topic.c_str(), topic_DB.c_str());
+        // rsdebugDln("i=%d, s1=%s, s2=%s", i, topic_in.c_str(), topic_DB.c_str());
+      }
+      else
+      {
+        topic_DB = CreateTopic((e_IDDirTopic *)_arr_SubscribeElement[i].IDDirTopic, _arr_SubscribeElement[i].IDVarTopic);
+      }
+      if (topic_in.length() == topic_DB.length())
+        if (topic_in == topic_DB)
+        {
+          // rsdebugDlnF("==:break");
+          _arr_SubscribeElement[i].Callback(in_element);
+          break;
+        }
+    }
+  }
+#endif
+}
+
+void MQTT_sub_All()
+{
+    for (uint8 i = 0; i < (sizeof(_arr_SubscribeElement) / sizeof(_arr_SubscribeElement[0])); i++)
+    {
+        mqtt_subscribe(_arr_SubscribeElement[i]);
+    }
+}
 
 // void MQTT_com_SaveSettings(s_element_MQTT _element)
 // {
@@ -69,7 +180,8 @@
 //         MQTT_pub_Settings_ok(_Save);
 //     // debuglog_print_free_memory();
 // }
-void cb_MQTT_com_Info(s_element_MQTT _element)
+
+void cb_MQTT_sub_Info(s_element_MQTT _element)
 {
     uint8_t payload_len = strlen(_element.payload);
     rsdebugInfF("MQTT in->Info:");
@@ -107,21 +219,12 @@ void cb_MQTT_com_Info(s_element_MQTT _element)
         }
     }
 }
-void cb_MQTT_com_Settings(s_element_MQTT _element)
+
+void cb_MQTT_sub_Settings(s_element_MQTT _element)
 {
-    // EmptyMemorySettingsNTC();
-    // debuglog_print_free_memory();
-    // char *topic = (char *)_element.topic->c_str();
-    // char *topic = _element.topic;
-    // _element.payload->toLowerCase();
-    // char *payload = (char *)_element.payload->c_str();
-    // char *payload = _element.payload;
     uint8_t payload_len = strlen(_element.payload);
     rsdebugInfF("MQTT in->Settings:");
     rsdebugInfln("%s<%s$%d>", _element.topic, _element.payload, payload_len);
-    // const char ArrVarTopic[_LastElement_e_IDVarTopic][14]
-    // const char ArrDirTopic[_LastElement_e_IDDirTopic][10]
-    // char arr_dirs[10][14] = {"", "", "", "", "", "", "", "", ""};
     char arr_dirs[8][16] = {"", "", "", "", ""}; // [уровней][символов]
     uint16_t i = 0;
     char *pch = strtok(_element.topic, "/");
@@ -187,7 +290,7 @@ void cb_MQTT_com_Settings(s_element_MQTT _element)
                         if (tmp_result & 2) // 2 или 3 - payload != real_data
                         {
                             Debug.setRdebugEnabled(g_p_sys_settings_ROM->RSDebug_RDebug);
-                                // init_rdebuglog();
+                            // init_rdebuglog();
                         }
                     }
                     else
@@ -471,7 +574,7 @@ void cb_MQTT_com_Settings(s_element_MQTT _element)
                 }
                 else
                 {
-                    mqtt_publish(dirs_topic, vc_Debug, "no");
+                    mqtt_publish_no(dirs_topic, vc_Debug);
                 }
                 return;
             }
@@ -501,6 +604,47 @@ void cb_MQTT_com_Settings(s_element_MQTT _element)
 //     MQTT_pub_Settings_NTP_IP(dirs_topic, v_ip3, 2);
 //     EmptyMemorySettingsNTP();
 // }
+
+void mqtt_subscribe(s_SubscribeElement _sub_element)
+{
+    String topic = CreateTopic(_sub_element.IDDirTopic, _sub_element.IDVarTopic);
+    rsdebugDnfln("sub %s", topic.c_str());
+    client.subscribe(topic.c_str(), _sub_element.mqttQOS);
+}
+
+void mqtt_unsubscribe(s_SubscribeElement _sub_element)
+{
+}
+
+bool is_equal_ok(const char *char_str)
+{
+    return (!strcmp(char_str, "ok"));
+}
+
+bool is_equal_no(const char *char_str)
+{
+    return (!strcmp(char_str, "no"));
+}
+
+bool is_equal_enable(const char *char_str)
+{
+    return (!strcmp(char_str, "enable") ||
+            !strcmp(char_str, "true") ||
+            !strcmp(char_str, "open") ||
+            !strcmp(char_str, "yes") ||
+            !strcmp(char_str, "1") ||
+            !strcmp(char_str, "on"));
+}
+
+bool is_equal_disable(const char *char_str)
+{
+    return (!strcmp(char_str, "disable") ||
+            !strcmp(char_str, "false") ||
+            !strcmp(char_str, "close") ||
+            !strcmp(char_str, "no") ||
+            !strcmp(char_str, "0") ||
+            !strcmp(char_str, "off"));
+}
 
 bool Modify_string(e_IDDirTopic *_dir_topic, e_IDVarTopic _IDVarTopic, const char *_payload, char _data[])
 {
