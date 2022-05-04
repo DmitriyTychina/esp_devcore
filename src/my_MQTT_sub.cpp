@@ -52,90 +52,90 @@ const s_SubscribeElement _arr_SubscribeElement[] = {
 void onMessageReceived(char *topic, char *payload, AsyncMqttClientMessageProperties properties, size_t len, size_t index, size_t total)
 {
 #ifdef MQTT_QUEUE
-  char *_topic = new char[strlen(topic)];
-  strcpy(_topic, topic);
-  char *_payload = new char[len + 1];
-  memcpy(_payload, payload, len);
-  _payload[len] = 0;
-  s_element_MQTT in_element = {_topic, _payload};
-  // rsdebugDnfln("1topic[%s]", topic);
-  rsdebugDnfln("[%d]MQTT incoming: %s[%s][%d][%d][%d]", p_Queue_MQTT.isCount(), _topic, _payload, len, index, total);
-  if (p_Queue_MQTT.isFull())
-  {
-    rsdebugEnflnF("p_Queue_nCallback is full !!!!");
-  }
-  else
-  {
-    if (!p_Queue_MQTT.isEmpty())
+    char *_topic = new char[strlen(topic)];
+    strcpy(_topic, topic);
+    char *_payload = new char[len + 1];
+    memcpy(_payload, payload, len);
+    _payload[len] = 0;
+    s_element_MQTT in_element = {_topic, _payload};
+    // rsdebugDnfln("1topic[%s]", topic);
+    rsdebugDnfln("[%d]MQTT incoming: %s[%s][%d][%d][%d]", p_Queue_MQTT.isCount(), _topic, _payload, len, index, total);
+    if (p_Queue_MQTT.isFull())
     {
-      // rsdebugDnflnF("@3");
-      s_element_MQTT *_element = (s_element_MQTT *)p_Queue_MQTT.peeklast();
-      // rsdebugDnflnF("@31");
-      // rsdebugDnfln("[%d]MQTT peeklast: %s[%s]", p_Queue_MQTT->isCount() - 1, _element->topic->c_str(), _element->payload->c_str());
-      // rsdebugDnfln("#1[%s][%d][%s][%d]", _element->topic, strlen(_element->topic), in_element.topic, strlen(_topic));
-      // rsdebugDnfln("#2[%s][%d][%s][%d]", _element->payload, strlen(_element->payload), in_element.payload, strlen(_payload));
-      // rsdebugDnflnF("@32");
-      // rsdebugInfln("FreeRAM1: %d", ESP.getFreeHeap());
-      if (!strcmp((*_element).topic, _topic) && !strcmp((*_element).payload, _payload))
-      {
-        rsdebugWnflnF("Duplicate !!!!");
-        delete _topic;
-        delete _payload;
-        // delete in_element;
-        return;
-      }
-      // rsdebugInfln("FreeRAM2: %d", ESP.getFreeHeap());
+        rsdebugEnflnF("p_Queue_nCallback is full !!!!");
     }
-    // {
-    // rsdebugDnflnF("@3");
-    // rsdebugInfln("FreeRAM3: %d", ESP.getFreeHeap());
-    p_Queue_MQTT.push((uint8_t *)&in_element);
-    // rsdebugInfln("FreeRAM4: %d", ESP.getFreeHeap());
-    ut_MQTT.forceNextIteration();
-  }
-#else
-  char tmp_payload[len + 1];
-  memcpy(tmp_payload, payload, len);
-  tmp_payload[len] = 0;
-  s_element_MQTT in_element = {topic, tmp_payload};
-  rsdebugDnfF("MQTT incoming: ");
-  rsdebugDnfln("%s<%s>", topic, tmp_payload);
-  if (!strcmp(last_topic, topic) && !strcmp(last_payload, tmp_payload))
-  {
-    rsdebugWnflnF("Duplicate !!!!");
-    return;
-  }
-  else
-  {
-    strcpy(last_topic, topic);
-    strcpy(last_payload, tmp_payload);
-    String topic_in, topic_DB;
-    topic_in = String(topic);
-    // payload_in = String(tmp_payload);
-    // uint8_t i;
-    // uint8_t n = sizeof(_arr_SubscribeElement) / sizeof(_arr_SubscribeElement[0]);
-    for (uint8_t i = 0; i < (sizeof(_arr_SubscribeElement) / sizeof(_arr_SubscribeElement[0])); i++)
+    else
     {
-      if (_arr_SubscribeElement[i].IDVarTopic == v_all)
-      {
-        topic_DB = CreateTopic((e_IDDirTopic *)_arr_SubscribeElement[i].IDDirTopic, v_empty);
-        topic_in.remove(topic_DB.length());
-        // rsdebugDln("topic_in=%s, topic=%s, topic_DB=%s", topic_in.c_str(), topic.c_str(), topic_DB.c_str());
-        // rsdebugDln("i=%d, s1=%s, s2=%s", i, topic_in.c_str(), topic_DB.c_str());
-      }
-      else
-      {
-        topic_DB = CreateTopic((e_IDDirTopic *)_arr_SubscribeElement[i].IDDirTopic, _arr_SubscribeElement[i].IDVarTopic);
-      }
-      if (topic_in.length() == topic_DB.length())
-        if (topic_in == topic_DB)
+        if (!p_Queue_MQTT.isEmpty())
         {
-          // rsdebugDlnF("==:break");
-          _arr_SubscribeElement[i].Callback(in_element);
-          break;
+            // rsdebugDnflnF("@3");
+            s_element_MQTT *_element = (s_element_MQTT *)p_Queue_MQTT.peeklast();
+            // rsdebugDnflnF("@31");
+            // rsdebugDnfln("[%d]MQTT peeklast: %s[%s]", p_Queue_MQTT->isCount() - 1, _element->topic->c_str(), _element->payload->c_str());
+            // rsdebugDnfln("#1[%s][%d][%s][%d]", _element->topic, strlen(_element->topic), in_element.topic, strlen(_topic));
+            // rsdebugDnfln("#2[%s][%d][%s][%d]", _element->payload, strlen(_element->payload), in_element.payload, strlen(_payload));
+            // rsdebugDnflnF("@32");
+            // rsdebugInfln("FreeRAM1: %d", ESP.getFreeHeap());
+            if (!strcmp((*_element).topic, _topic) && !strcmp((*_element).payload, _payload))
+            {
+                rsdebugWnflnF("Duplicate !!!!");
+                delete _topic;
+                delete _payload;
+                // delete in_element;
+                return;
+            }
+            // rsdebugInfln("FreeRAM2: %d", ESP.getFreeHeap());
+        }
+        // {
+        // rsdebugDnflnF("@3");
+        // rsdebugInfln("FreeRAM3: %d", ESP.getFreeHeap());
+        p_Queue_MQTT.push((uint8_t *)&in_element);
+        // rsdebugInfln("FreeRAM4: %d", ESP.getFreeHeap());
+        ut_MQTT.forceNextIteration();
+    }
+#else
+    char tmp_payload[len + 1];
+    memcpy(tmp_payload, payload, len);
+    tmp_payload[len] = 0;
+    s_element_MQTT in_element = {topic, tmp_payload};
+    rsdebugDnfF("MQTT incoming: ");
+    rsdebugDnfln("%s<%s>", topic, tmp_payload);
+    if (!strcmp(last_topic, topic) && !strcmp(last_payload, tmp_payload))
+    {
+        rsdebugWnflnF("Duplicate !!!!");
+        return;
+    }
+    else
+    {
+        strcpy(last_topic, topic);
+        strcpy(last_payload, tmp_payload);
+        String topic_in, topic_DB;
+        topic_in = String(topic);
+        // payload_in = String(tmp_payload);
+        // uint8_t i;
+        // uint8_t n = sizeof(_arr_SubscribeElement) / sizeof(_arr_SubscribeElement[0]);
+        for (uint8_t i = 0; i < (sizeof(_arr_SubscribeElement) / sizeof(_arr_SubscribeElement[0])); i++)
+        {
+            if (_arr_SubscribeElement[i].IDVarTopic == v_all)
+            {
+                topic_DB = CreateTopic((e_IDDirTopic *)_arr_SubscribeElement[i].IDDirTopic, v_empty);
+                topic_in.remove(topic_DB.length());
+                // rsdebugDln("topic_in=%s, topic=%s, topic_DB=%s", topic_in.c_str(), topic.c_str(), topic_DB.c_str());
+                // rsdebugDln("i=%d, s1=%s, s2=%s", i, topic_in.c_str(), topic_DB.c_str());
+            }
+            else
+            {
+                topic_DB = CreateTopic((e_IDDirTopic *)_arr_SubscribeElement[i].IDDirTopic, _arr_SubscribeElement[i].IDVarTopic);
+            }
+            if (topic_in.length() == topic_DB.length())
+                if (topic_in == topic_DB)
+                {
+                    // rsdebugDlnF("==:break");
+                    _arr_SubscribeElement[i].Callback(in_element);
+                    break;
+                }
         }
     }
-  }
 #endif
 }
 
@@ -248,8 +248,13 @@ void cb_MQTT_sub_Settings(s_element_MQTT _element)
                 dirs_topic[2] = d_rs_debug;
                 if (!strcmp(arr_dirs[3], ArrVarTopic[v_t_task]))
                 {
+#if defined(EEPROM_C)
                     if (Modify_task_tTask(dirs_topic, _element.payload, &ut_debuglog, 10, 1000, &g_p_sys_settings_ROM->RSDebug_Ttask))
                         NeedSaveSettings.sys.bit.RSDebug_T_task = true;
+#elif defined(EEPROM_CPP)
+                    if (Modify_task_tTask(dirs_topic, _element.payload, &ut_debuglog, 10, 1000, &ram_data.p_SYS_settings()->RSDebug_Ttask))
+                        ram_data.unsaved = true;
+#endif
                     else
                         return;
                 }
@@ -259,16 +264,28 @@ void cb_MQTT_sub_Settings(s_element_MQTT _element)
                     // rsdebugDlnF("***d_s_debug");
                     if (!strcmp(arr_dirs[4], ArrVarTopic[v_enable]))
                     {
+#if defined(EEPROM_C)
                         uint8_t tmp_result = Modify_bool(dirs_topic, v_enable, _element.payload, &g_p_sys_settings_ROM->RSDebug_SDebug, Debug.isSdebugEnabled()); // в минутах: от 1мин до 24ч
-                        if (!tmp_result)                                                                                                                          // 0 - нет изменеий
+#elif defined(EEPROM_CPP)
+                        uint8_t tmp_result = Modify_bool(dirs_topic, v_enable, _element.payload, &ram_data.p_SYS_settings()->RSDebug_SDebug, Debug.isSdebugEnabled()); // в минутах: от 1мин до 24ч
+#endif
+                        if (!tmp_result) // 0 - нет изменеий
                             return;
                         if (tmp_result & 1) // 1 или 3 - payload != mem_data
                         {
+#if defined(EEPROM_C)
                             NeedSaveSettings.sys.bit.RSDebug_SD_en = true;
+#elif defined(EEPROM_CPP)
+                            ram_data.unsaved = true;
+#endif
                         }
                         if (tmp_result & 2) // 2 или 3 - payload != real_data
                         {
+#if defined(EEPROM_C)
                             Debug.setSdebugEnabled(g_p_sys_settings_ROM->RSDebug_SDebug);
+#elif defined(EEPROM_CPP)
+                            Debug.setSdebugEnabled(ram_data.p_SYS_settings()->RSDebug_SDebug);
+#endif
                         }
                     }
                     else
@@ -280,16 +297,28 @@ void cb_MQTT_sub_Settings(s_element_MQTT _element)
                     // rsdebugDlnF("***d_r_debug");
                     if (!strcmp(arr_dirs[4], ArrVarTopic[v_enable]))
                     {
+#if defined(EEPROM_C)
                         uint8_t tmp_result = Modify_bool(dirs_topic, v_enable, _element.payload, &g_p_sys_settings_ROM->RSDebug_RDebug, Debug.isRdebugEnabled()); // в минутах: от 1мин до 24ч
-                        if (!tmp_result)                                                                                                                          // 0 - нет изменеий
+#elif defined(EEPROM_CPP)
+                        uint8_t tmp_result = Modify_bool(dirs_topic, v_enable, _element.payload, &ram_data.p_SYS_settings()->RSDebug_RDebug, Debug.isRdebugEnabled()); // в минутах: от 1мин до 24ч
+#endif
+                        if (!tmp_result) // 0 - нет изменеий
                             return;
                         if (tmp_result & 1) // 1 или 3 - payload != mem_data
                         {
+#if defined(EEPROM_C)
                             NeedSaveSettings.sys.bit.RSDebug_RD_en = true;
+#elif defined(EEPROM_CPP)
+                            ram_data.unsaved = true;
+#endif
                         }
                         if (tmp_result & 2) // 2 или 3 - payload != real_data
                         {
+#if defined(EEPROM_C)
                             Debug.setRdebugEnabled(g_p_sys_settings_ROM->RSDebug_RDebug);
+#elif defined(EEPROM_CPP)
+                            Debug.setRdebugEnabled(ram_data.p_SYS_settings()->RSDebug_RDebug);
+#endif
                             // init_rdebuglog();
                         }
                     }
@@ -304,8 +333,13 @@ void cb_MQTT_sub_Settings(s_element_MQTT _element)
                 dirs_topic[2] = d_sysmon;
                 if (!strcmp(arr_dirs[3], ArrVarTopic[v_t_task]))
                 {
+#if defined(EEPROM_C)
                     if (Modify_task_tTask(dirs_topic, _element.payload, &ut_sysmon, 1000, 3600000, &g_p_sys_settings_ROM->SysMon_Ttask))
                         NeedSaveSettings.sys.bit.SysMon_T_task = true;
+#elif defined(EEPROM_CPP)
+                    if (Modify_task_tTask(dirs_topic, _element.payload, &ut_sysmon, 1000, 3600000, &ram_data.p_SYS_settings()->SysMon_Ttask))
+                        ram_data.unsaved = true;
+#endif
                     else
                         return;
                 }
@@ -317,8 +351,13 @@ void cb_MQTT_sub_Settings(s_element_MQTT _element)
                 dirs_topic[2] = d_ota;
                 if (!strcmp(arr_dirs[3], ArrVarTopic[v_t_task]))
                 {
+#if defined(EEPROM_C)
                     if (Modify_task_tTask(dirs_topic, _element.payload, &ut_OTA, 1, 5000, &g_p_sys_settings_ROM->OTA_Ttask))
                         NeedSaveSettings.sys.bit.OTA_T_task = true;
+#elif defined(EEPROM_CPP)
+                    if (Modify_task_tTask(dirs_topic, _element.payload, &ut_OTA, 1, 5000, &ram_data.p_SYS_settings()->OTA_Ttask))
+                        ram_data.unsaved = true;
+#endif
                     else
                         return;
                 }
@@ -330,22 +369,37 @@ void cb_MQTT_sub_Settings(s_element_MQTT _element)
                 dirs_topic[2] = d_mqtt;
                 if (!strcmp(arr_dirs[3], ArrVarTopic[v_t_task]))
                 {
+#if defined(EEPROM_C)
                     if (Modify_task_tTask(dirs_topic, _element.payload, &ut_MQTT, 1, 1000, &g_p_ethernet_settings_ROM->MQTT_Ttask))
                         NeedSaveSettings.bit.MQTT = true;
+#elif defined(EEPROM_CPP)
+                    if (Modify_task_tTask(dirs_topic, _element.payload, &ut_MQTT, 1, 1000, &ram_data.p_NET_settings()->MQTT_Ttask))
+                        ram_data.unsaved = true;
+#endif
                     else
                         return;
                 }
                 else if (!strcmp(arr_dirs[3], ArrVarTopic[v_user]))
                 {
+#if defined(EEPROM_C)
                     if (Modify_pass(dirs_topic, v_user, _element.payload, (char *)&g_p_ethernet_settings_ROM->MQTT_user))
                         NeedSaveSettings.bit.MQTT = true;
+#elif defined(EEPROM_CPP)
+                    if (Modify_pass(dirs_topic, v_user, _element.payload, (char *)&ram_data.p_NET_settings()->MQTT_user))
+                        ram_data.unsaved = true;
+#endif
                     else
                         return;
                 }
                 else if (!strcmp(arr_dirs[3], ArrVarTopic[v_pass]))
                 {
+#if defined(EEPROM_C)
                     if (Modify_pass(dirs_topic, v_pass, _element.payload, (char *)&g_p_ethernet_settings_ROM->MQTT_pass))
                         NeedSaveSettings.bit.MQTT = true;
+#elif defined(EEPROM_CPP)
+                    if (Modify_pass(dirs_topic, v_pass, _element.payload, (char *)&ram_data.p_NET_settings()->MQTT_pass))
+                        ram_data.unsaved = true;
+#endif
                     else
                         return;
                 }
@@ -357,8 +411,13 @@ void cb_MQTT_sub_Settings(s_element_MQTT _element)
                 dirs_topic[2] = d_wifi;
                 if (!strcmp(arr_dirs[3], ArrVarTopic[v_t_task]))
                 {
+#if defined(EEPROM_C)
                     if (Modify_task_tTask(dirs_topic, _element.payload, &ut_wifi, 1, 500, &g_p_ethernet_settings_ROM->WiFi_Ttask))
                         NeedSaveSettings.bit.WIFI = true;
+#elif defined(EEPROM_CPP)
+                    if (Modify_task_tTask(dirs_topic, _element.payload, &ut_wifi, 1, 500, &ram_data.p_NET_settings()->WiFi_Ttask))
+                        ram_data.unsaved = true;
+#endif
                     else
                         return;
                 }
@@ -379,22 +438,37 @@ void cb_MQTT_sub_Settings(s_element_MQTT _element)
                         dirs_topic[3] = a_dirs[num_AP];
                         if (!strcmp(arr_dirs[4], ArrVarTopic[v_ssid]))
                         {
+#if defined(EEPROM_C)
                             if (Modify_string(dirs_topic, v_ssid, _element.payload, (char *)&g_p_ethernet_settings_ROM->settings_serv[num_AP].SSID))
                                 NeedSaveSettings.bit.WIFI = true;
+#elif defined(EEPROM_CPP)
+                            if (Modify_string(dirs_topic, v_ssid, _element.payload, (char *)&ram_data.p_NET_settings()->settings_serv[num_AP].SSID))
+                                ram_data.unsaved = true;
+#endif
                             else
                                 return;
                         }
                         else if (!strcmp(arr_dirs[4], ArrVarTopic[v_pass]))
                         {
+#if defined(EEPROM_C)
                             if (Modify_pass(dirs_topic, v_pass, _element.payload, (char *)&g_p_ethernet_settings_ROM->settings_serv[num_AP].PASS))
                                 NeedSaveSettings.bit.WIFI = true;
+#elif defined(EEPROM_CPP)
+                            if (Modify_pass(dirs_topic, v_pass, _element.payload, (char *)&ram_data.p_NET_settings()->settings_serv[num_AP].PASS))
+                                ram_data.unsaved = true;
+#endif
                             else
                                 return;
                         }
                         else if (!strcmp(arr_dirs[4], ArrVarTopic[v_ip_serv]))
                         {
+#if defined(EEPROM_C)
                             if (Modify_string(dirs_topic, v_ip_serv, _element.payload, (char *)&g_p_ethernet_settings_ROM->settings_serv[num_AP].MQTTip))
                                 NeedSaveSettings.bit.WIFI = true;
+#elif defined(EEPROM_CPP)
+                            if (Modify_string(dirs_topic, v_ip_serv, _element.payload, (char *)&ram_data.p_NET_settings()->settings_serv[num_AP].MQTTip))
+                                ram_data.unsaved = true;
+#endif
                             else
                                 return;
                         }
@@ -412,66 +486,115 @@ void cb_MQTT_sub_Settings(s_element_MQTT _element)
                 dirs_topic[2] = d_ntp;
                 if (!strcmp(arr_dirs[3], ArrVarTopic[v_t_task]))
                 {
+#if defined(EEPROM_C)
                     if (Modify_task_tTask(dirs_topic, _element.payload, &ut_NTP, 100, 5000, &g_p_NTP_settings_ROM->Ttask))
                         NeedSaveSettings.bit.NTP = true;
+#elif defined(EEPROM_CPP)
+                    if (Modify_task_tTask(dirs_topic, _element.payload, &ut_NTP, 100, 5000, &ram_data.p_NTP_settings()->Ttask))
+                        ram_data.unsaved = true;
+#endif
                     else
                         return;
                 }
                 else if (!strcmp(arr_dirs[3], ArrVarTopic[v_t_sync]))
                 {
                     // rsdebugDnfln("@1 d_ntp");
+#if defined(EEPROM_C)
                     uint8_t tmp_result = Modify_num(dirs_topic, v_t_sync, _element.payload, 1, 1440, &g_p_NTP_settings_ROM->T_syncNTP, NTP.getInterval() / 60); // в минутах: от 1мин до 24ч
-                    if (!tmp_result)                                                                                                                            // 0 - нет изменеий
+#elif defined(EEPROM_CPP)
+                    uint8_t tmp_result = Modify_num(dirs_topic, v_t_sync, _element.payload, 1, 1440, &ram_data.p_NTP_settings()->T_syncNTP, NTP.getInterval() / 60); // в минутах: от 1мин до 24ч
+#endif
+                    if (!tmp_result) // 0 - нет изменеий
                         return;
                     if (tmp_result & 1) // 1 или 3 - payload != mem_data
                     {
+#if defined(EEPROM_C)
                         NeedSaveSettings.bit.NTP = true;
+#elif defined(EEPROM_CPP)
+                        ram_data.unsaved = true;
+#endif
                     }
                     if (tmp_result & 2) // 2 или 3 - payload != real_data
                     {
+#if defined(EEPROM_C)
                         NTP.setInterval(g_p_NTP_settings_ROM->T_syncNTP * 60);
+#elif defined(EEPROM_CPP)
+                        NTP.setInterval(ram_data.p_NTP_settings()->T_syncNTP * 60);
+#endif
                     }
                     // rsdebugDnfln("@2 d_ntp");
                 }
                 else if (!strcmp(arr_dirs[3], ArrVarTopic[v_timezone]))
                 {
+#if defined(EEPROM_C)
                     uint8_t tmp_result = Modify_num(dirs_topic, v_timezone, _element.payload, -23, 23, &g_p_NTP_settings_ROM->timezone, NTP.getTimeZone()); // в минутах: от 1мин до 24ч
-                    if (!tmp_result)                                                                                                                        // 0 - нет изменеий
+#elif defined(EEPROM_CPP)
+                    uint8_t tmp_result = Modify_num(dirs_topic, v_timezone, _element.payload, -23, 23, &ram_data.p_NTP_settings()->timezone, NTP.getTimeZone()); // в минутах: от 1мин до 24ч
+#endif
+                    if (!tmp_result) // 0 - нет изменеий
                         return;
                     if (tmp_result & 1) // 1 или 3 - payload != mem_data
                     {
+#if defined(EEPROM_C)
                         NeedSaveSettings.bit.NTP = true;
+#elif defined(EEPROM_CPP)
+                        ram_data.unsaved = true;
+#endif
                     }
                     if (tmp_result & 2) // 2 или 3 - payload != real_data
                     {
+#if defined(EEPROM_C)
                         NTP.setTimeZone(g_p_NTP_settings_ROM->timezone);
+#elif defined(EEPROM_CPP)
+                        NTP.setTimeZone(ram_data.p_NTP_settings()->timezone);
+#endif
                     }
                 }
                 else if (!strcmp(arr_dirs[3], ArrVarTopic[v_ip1]))
                 {
+#if defined(EEPROM_C)
                     if (Modify_string(dirs_topic, v_ip1, _element.payload, (char *)&g_p_NTP_settings_ROM->serversNTP[0]))
                         NeedSaveSettings.bit.NTP = true;
+#elif defined(EEPROM_CPP)
+                    if (Modify_string(dirs_topic, v_ip1, _element.payload, (char *)&ram_data.p_NTP_settings()->serversNTP[0]))
+                        ram_data.unsaved = true;
+#endif
                     else
                         return;
                 }
                 else if (!strcmp(arr_dirs[3], ArrVarTopic[v_ip2]))
                 {
+#if defined(EEPROM_C)
                     if (Modify_string(dirs_topic, v_ip2, _element.payload, (char *)&g_p_NTP_settings_ROM->serversNTP[1]))
                         NeedSaveSettings.bit.NTP = true;
+#elif defined(EEPROM_CPP)
+                    if (Modify_string(dirs_topic, v_ip2, _element.payload, (char *)&ram_data.p_NTP_settings()->serversNTP[1]))
+                        ram_data.unsaved = true;
+#endif
                     else
                         return;
                 }
                 else if (!strcmp(arr_dirs[3], ArrVarTopic[v_ip3]))
                 {
+#if defined(EEPROM_C)
                     if (Modify_string(dirs_topic, v_ip3, _element.payload, (char *)&g_p_NTP_settings_ROM->serversNTP[2]))
                         NeedSaveSettings.bit.NTP = true;
+#elif defined(EEPROM_CPP)
+                    if (Modify_string(dirs_topic, v_ip3, _element.payload, (char *)&ram_data.p_NTP_settings()->serversNTP[2]))
+                        ram_data.unsaved = true;
+#endif
                     else
                         return;
                 }
                 // rsdebugDnfln("@3 d_ntp");
                 init_NTP_with_WiFi();
+#if defined(EEPROM_C)
                 if (!NeedSaveSettings.bit.NTP)
                     return;
+#elif defined(EEPROM_CPP)
+                if (!ram_data.unsaved)
+                    return;
+#endif
             }
             else if (!strcmp(arr_dirs[2], ArrVarTopic[vc_ReadDflt]))
             {
@@ -510,7 +633,11 @@ void cb_MQTT_sub_Settings(s_element_MQTT _element)
             {
                 // dirs_topic[2] = _Save;
                 // rsdebugDnflnF("@1");
+#if defined(EEPROM_C)
                 if (NeedSaveSettings.all)
+#elif defined(EEPROM_CPP)
+                if (ram_data.unsaved)
+#endif
                 {
                     if (!strcmp(_element.payload, "NeedSave"))
                     {
@@ -535,12 +662,20 @@ void cb_MQTT_sub_Settings(s_element_MQTT _element)
                     else if (is_equal_disable(_element.payload))
                     {
                         // rsdebugDnflnF("@6");
+#if defined(EEPROM_C)
                         if (NeedSaveSettings.all)
+#elif defined(EEPROM_CPP)
+                        if (ram_data.unsaved)
+#endif
                         {
                             // rsdebugDnflnF("@7");
                             rsdebugInflnF("Не сохраняем, загружаем данные из ROM");
+#if defined(EEPROM_C)
                             NotSaveEmptyMemorySettings(); // не сохраняем текущие
-                            MQTT_pub_allSettings(true);   // публикуем данные из ROM
+#elif defined(EEPROM_CPP)
+                            ram_data.unsaved = false; // не сохраняем текущие
+#endif
+                            MQTT_pub_allSettings(true); // публикуем данные из ROM
                             mqtt_publish_ok(dirs_topic, vc_Save);
                             mqtt_publish_no(dirs_topic, vc_ReadDflt);
                             mqtt_publish_no(dirs_topic, vc_ReadCrnt);
@@ -583,7 +718,11 @@ void cb_MQTT_sub_Settings(s_element_MQTT _element)
             dirs_topic[2] = d_empty;
             dirs_topic[3] = d_empty;
             // rsdebugDnfln("@ NeedSaveSettings.all=%d", NeedSaveSettings.all);
+#if defined(EEPROM_C)
             if (NeedSaveSettings.all)
+#elif defined(EEPROM_CPP)
+            if (ram_data.unsaved)
+#endif
             {
                 // rsdebugDnfln("@ mqtt_publish NeedSave vc_Save");
                 mqtt_publish(dirs_topic, vc_Save, "NeedSave");

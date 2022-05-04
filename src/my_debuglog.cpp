@@ -21,15 +21,26 @@ void init_sdebuglog(bool force)
     else
     {
         LoadInMemorySettingsSys();
+#if defined(EEPROM_C)
         Debug.setSdebugEnabled(g_p_sys_settings_ROM->RSDebug_SDebug);
+#elif defined(EEPROM_CPP)
+        // rsdebugInfln("----RSdebug init: %s", ram_data.p_SYS_settings()->RSDebug_SDebug ? "1" : "0");
+        Debug.setSdebugEnabled(ram_data.p_SYS_settings()->RSDebug_SDebug);
+        // Debug.setSdebugEnabled(true);
+#endif
     }
 }
 
 void init_rdebuglog()
 {
+#if defined(EEPROM_C)
     LoadInMemorySettingsSys();
     ut_debuglog.setInterval(g_p_sys_settings_ROM->RSDebug_Ttask);
     Debug.setRdebugEnabled(g_p_sys_settings_ROM->RSDebug_RDebug);
+#elif defined(EEPROM_CPP)
+    ut_debuglog.setInterval(ram_data.p_SYS_settings()->RSDebug_Ttask);
+    Debug.setRdebugEnabled(ram_data.p_SYS_settings()->RSDebug_RDebug);
+#endif
     // Initialize RSDebug
     if (Debug.isRdebugEnabled())
     {

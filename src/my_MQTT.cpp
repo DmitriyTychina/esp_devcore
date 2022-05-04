@@ -40,10 +40,16 @@ void mqtt_init(uint8_t _idx)
   // else if (mqtt_count_conn == mqtt_count_conn_reset)
   //   ESP.restart();
 
+#if defined(EEPROM_C)
   ut_MQTT.setInterval(g_p_ethernet_settings_ROM->MQTT_Ttask);
   client.setServer(g_p_ethernet_settings_ROM->settings_serv[_idx].MQTTip, 1883);
-  client.setClientId(OTA_NAME);
   client.setCredentials(g_p_ethernet_settings_ROM->MQTT_user, g_p_ethernet_settings_ROM->MQTT_pass);
+#elif defined(EEPROM_CPP)
+  ut_MQTT.setInterval(ram_data.p_NET_settings()->MQTT_Ttask);
+  client.setServer(ram_data.p_NET_settings()->settings_serv[_idx].MQTTip, 1883);
+  client.setCredentials(ram_data.p_NET_settings()->MQTT_user, ram_data.p_NET_settings()->MQTT_pass);
+#endif
+  client.setClientId(OTA_NAME);
   // client.setCleanSession(true);
   // g_num_serv = num_serv;
 }
@@ -72,7 +78,11 @@ void cb_ut_MQTT()
           _idx--;
           mqtt_init(_idx);
           rsdebugInfF("Подключаемся к MQTT серверу");
+#if defined(EEPROM_C)
           rsdebugInfln("[%d]:%s", _idx, g_p_ethernet_settings_ROM->settings_serv[_idx].MQTTip);
+#elif defined(EEPROM_CPP)
+          rsdebugInfln("[%d]:%s", _idx, ram_data.p_NET_settings()->settings_serv[_idx].MQTTip);
+#endif
           MQTT_state = _MQTT_connecting;
           ut_MQTT.forceNextIteration();
         }
@@ -204,7 +214,11 @@ void onMqttConnect(bool sessionPresent)
 {
   // rsdebugDnfln("onMqttConnect[%d]", (uint8_t)sessionPresent);
   LoadInMemorySettingsEthernet();
+#if defined(EEPROM_C)
   ut_MQTT.setInterval(g_p_ethernet_settings_ROM->MQTT_Ttask);
+#elif defined(EEPROM_CPP)
+  ut_MQTT.setInterval(ram_data.p_NET_settings()->MQTT_Ttask);
+#endif
   ut_MQTT.forceNextIteration();
   MQTT_state = _MQTT_on_connected;
 }

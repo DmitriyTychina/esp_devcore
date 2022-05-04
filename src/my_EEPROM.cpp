@@ -1,12 +1,7 @@
 #include <Arduino.h>
-#include <EEPROM.h>
 
 #include "my_EEPROM.h"
 #include "my_debuglog.h"
-
-// bool NeedSaveSettings_NTP = false;
-u_NeedSaveSettings NeedSaveSettings;
-s_all_settings_ROM *s1;
 
 // ********************************************************************************
 // Расчет CRC16
@@ -29,164 +24,37 @@ uint16_t CRC16(void *pData, uint16_t nCount)
     return (CRC);
 }
 
-// получаем указателя на данные из ROM (с EEPROM.begin)
-// void get_p_all_settings_ROM(s_all_settings_ROM *_p_all_settings_ROM)
-// {
-//     EEPROM.begin(len_all_settings_ROM);
-//     _p_all_settings_ROM = (s_all_settings_ROM *)EEPROM.getConstDataPtr();
-//     if (!_p_all_settings_ROM) // если нет указателя
-//     {
-//         rsdebugEnflnF("Нет указателя на данные из ROM");
-//         EEPROM.end();
-//     }
-// }
-
-// если данные в ROM не валидны - записываем "по-умолчанию"
-void ROMVerifySettingsElseSaveDefault(bool force)
-{
-    // uint16_t len_struct = sizeof(s_all_settings_ROM);
-    // rsdebugDlnF("@1");
-    EEPROM.begin(len_all_settings_ROM);
-    // rsdebugDlnF("@2");
-    s_all_settings_ROM *_p_all_settings_ROM = (s_all_settings_ROM *)EEPROM.getConstDataPtr();
-    // s1 = (s_all_settings_ROM *)EEPROM.getConstDataPtr();
-    // s_all_settings_ROM *_p_all_settings_ROM = NULL;
-    // get_p_all_settings_ROM(_p_all_settings_ROM);
-    // EEPROM.getConstDataPtr();
-    // rsdebugDlnF("@3");
-    if (_p_all_settings_ROM)
-    {
-        // rsdebugDlnF("@4");
-        rsdebugInfF("Проверяем CRC ROM");
-        rsdebugInfln("$%d", len_all_settings_ROM);
-        // rsdebugInfln("ROM[%d]:%d", s1->len, len_all_settings_ROM);
-        if (!force && compareCRC(_p_all_settings_ROM, len_all_settings_ROM)) // если данные в памяти валидны
-        {
-            rsdebugInflnF("Данные в ROM ok");
-        }
-        else
-        {
-            rsdebugWnflnF("Данные в ROM not ok");
-            all_settings_Default(_p_all_settings_ROM);
-            EEPROM.getDataPtr(); // установить флаг "данные изменились" для сохранения при EEPROM.end()
-        }
-    }
-    else
-        rsdebugEnflnF("Нет указателя на данные из ROM");
-    EEPROM.end();
-}
-
-void all_settings_Default(s_all_settings_ROM *__p_all_settings_ROM)
-{
-    rsdebugInflnF("Устанавливаем настройки по умолчанию");
-    s_all_settings_ROM def_all_settings_ROM;
-    // def_all_settings_ROM.len = len_all_settings_ROM;
-    calcCRC(&def_all_settings_ROM, len_all_settings_ROM);                      // данные по умолчанию не имеют вычесленого CRC !!! - вычисляем
-    memcpy(__p_all_settings_ROM, &def_all_settings_ROM, len_all_settings_ROM); // заполняем данными по умолчанию
-}
-
-// читаем из ROM настройки и получаем указатель на данные в RAM
-// void GetSettings(void *_p_settings_ROM, uint16_t addr, uint16_t len)
-// {
-//     if (!_p_settings_ROM) // если нет указателя на структуру
-//     {
-//         rsdebugDnflnF("@1");
-//         _p_settings_ROM = malloc(len); // выделяем память и создаем указатель
-//         rsdebugDnflnF("@2");
-//         if (!_p_settings_ROM) // если нет указателя на структуру
-//         {
-//             rsdebugEnfF("Не смогли выделить память для данных из ROM: ");
-//             rsdebugEnfln("%d байт", len);
-//             return;
-//         }
-//         rsdebugDlnF("@3");
-
-//         EEPROM.begin(len_all_settings_ROM);
-//         rsdebugDlnF("@4");
-//         uint8_t *_p_all_settings_ROM = (uint8_t *)EEPROM.getConstDataPtr();
-//         rsdebugDlnF("@5");
-//         // s_all_settings_ROM *_p_all_settings_ROM = NULL;
-//         // get_p_all_settings_ROM(_p_all_settings_ROM); // EEPROM.getConstDataPtr();
-//         if (!_p_all_settings_ROM)
-//         {
-//             rsdebugEnflnF("Нет указателя на данные из ROM");
-//             return;
-//         }
-//         rsdebugDlnF("@6");
-//         memcpy(_p_settings_ROM, _p_all_settings_ROM + addr, len);
-//         rsdebugDlnF("@7");
-//         EEPROM.end();
-//         rsdebugDlnF("@8");
-//     }
-// }
-
-// // очищаем RAM от настроек
-// void EmptySettings(T _p_settings_ROM)
-// {
-//     if (_p_settings_ROM) // если есть указатель на структуру
-//     {
-//         // debuglog_print_free_memory();
-//         delete _p_settings_ROM; // освобождаем память
-//         _p_settings_ROM = NULL;
-//         // debuglog_print_free_memory();
-//     }
-// }
-
+#if defined(EEPROM_C)
+u_NeedSaveSettings NeedSaveSettings;
 void LoadInMemorySettings(char *_name, void **p_MemorySettings, uint16_t _addr, uint16_t _size)
 {
     if (!*p_MemorySettings)
     {
         rsdebugInfF("Загружаем настройки ");
-        rsdebugInfln("%s из ROM$%d", _name, _size);
-        // GetSettings(p_MemorySettings, _addr, _size);
+        rsdebugInfln("%s из ROM$%d_of_%d", _name, _size, _addr);
         if (!*p_MemorySettings) // если нет указателя на структуру
         {
-            // rsdebugDnflnF("@1");
             *p_MemorySettings = malloc(_size); // выделяем память и создаем указатель
-            // rsdebugDnflnF("@2");
-            if (!*p_MemorySettings) // если нет указателя на структуру
+            if (!*p_MemorySettings)            // если нет указателя на структуру
             {
                 rsdebugEnfF("Не смогли выделить память для данных из ROM: ");
                 rsdebugEnfln("%d байт", _size);
                 return;
             }
-            // rsdebugDnflnF("@3");
-
             EEPROM.begin(len_all_settings_ROM);
-            // rsdebugDnflnF("@4");
             uint8_t *_p_all_settings_ROM = (uint8_t *)EEPROM.getConstDataPtr();
-            // rsdebugDnflnF("@5");
-            // s_all_settings_ROM *_p_all_settings_ROM = NULL;
-            // get_p_all_settings_ROM(_p_all_settings_ROM); // EEPROM.getConstDataPtr();
             if (!_p_all_settings_ROM)
             {
                 EEPROM.end();
                 rsdebugEnflnF("Нет указателя на данные из ROM");
                 return;
             }
-            // rsdebugDnflnF("@6");
             memcpy(*p_MemorySettings, _p_all_settings_ROM + _addr, _size);
-            // rsdebugDnflnF("@7");
             EEPROM.end();
-            // rsdebugDnflnF("@8");
         }
-        // rsdebugDnflnF("@9");
     }
-    // rsdebugDnflnF("@10");
     ut_emptymemory.suspendNextCall(emptymemory_TtaskDefault);
-    // rsdebugDnflnF("@11");
 }
-
-// void LoadInMemorySettingsSys()
-// {
-//     if (!g_p_sys_settings_ROM)
-//     {
-//         rsdebugInfF("Загружаем настройки Sys из ROM: ");
-//         rsdebugInfln("%d байт", len_sys_settings_ROM);
-//         GetSettingsSys(&g_p_sys_settings_ROM);
-//     }
-//     ut_emptymemory.suspendNextCall(emptymemory_TtaskDefault);
-// }
 
 void EmptyMemorySettingsSys(bool force) // force=true для очистки памяти независимо от NeedSaveSettings.bit
 {
@@ -202,28 +70,12 @@ void EmptyMemorySettingsSys(bool force) // force=true для очистки па
         {
             rsdebugInfF("Очищаем память от настроек Sys");
             rsdebugInfln("$%d", len_sys_settings_ROM);
-            // EmptySettingsSys(&g_p_sys_settings_ROM);
-            // EmptySettings(g_p_sys_settings_ROM);
             delete g_p_sys_settings_ROM;
             g_p_sys_settings_ROM = NULL;
             NeedSaveSettings.sys.all = 0;
-            // NeedSaveSettings.bit.OTA = false;
-            // NeedSaveSettings.bit.RSDebug_T_task = false;
-            // NeedSaveSettings.bit.SysMon = false;
         }
     }
 }
-
-// void LoadInMemorySettingsEthernet()
-// {
-//     if (!g_p_ethernet_settings_ROM)
-//     {
-//         rsdebugInfF("Загружаем настройки связи из ROM: ");
-//         rsdebugInfln("%d байт", len_ethernet_settings_ROM);
-//         GetSettingsEthernet(&g_p_ethernet_settings_ROM);
-//     }
-//     ut_emptymemory.suspendNextCall(emptymemory_TtaskDefault);
-// }
 
 void EmptyMemorySettingsEthernet(bool force) // force=true для очистки памяти независимо от NeedSaveSettings.bit
 {
@@ -248,17 +100,6 @@ void EmptyMemorySettingsEthernet(bool force) // force=true для очистки
     }
 }
 
-// void LoadInMemorySettingsNTP()
-// {
-//     if (!g_p_NTP_settings_ROM)
-//     {
-//         rsdebugInfF("Загружаем настройки NTP из ROM: ");
-//         rsdebugInfln("%d байт", len_NTP_settings_ROM);
-//         GetSettingsNTP(&g_p_NTP_settings_ROM);
-//     }
-//     ut_emptymemory.suspendNextCall(emptymemory_TtaskDefault);
-// }
-
 void EmptyMemorySettingsNTP(bool force) // force=true для очистки памяти независимо от NeedSaveSettings.bit
 {
     if (g_p_NTP_settings_ROM)
@@ -269,8 +110,6 @@ void EmptyMemorySettingsNTP(bool force) // force=true для очистки па
         {
             rsdebugInfF("Очищаем память от настроек NTP");
             rsdebugInfln("$%d", len_NTP_settings_ROM);
-            // EmptySettingsNTP(&g_p_NTP_settings_ROM);
-            // EmptySettings(g_p_NTP_settings_ROM);
             delete g_p_NTP_settings_ROM;
             g_p_NTP_settings_ROM = NULL;
             NeedSaveSettings.bit.NTP = false;
@@ -284,10 +123,6 @@ void verifyErrorNeedSaveSettings(const char *nameBit, bool _bit, void *settings_
     {
         rsdebugEnfln("NeedSaveSettings.bit.%s=true, но нет указателя на данные", nameBit)
     }
-    // else if (!_bit && settings_ROM) // не нужно
-    // {
-    //     rsdebugEnfln("NeedSaveSettings.bit.%s=false, но есть указатель на данные", nameBit);
-    // }
 }
 
 bool SaveAllSettings(void)
@@ -295,10 +130,7 @@ bool SaveAllSettings(void)
     if (NeedSaveSettings.all)
     {
         EEPROM.begin(len_all_settings_ROM);
-        // uint8_t *_p_all_settings_ROM = (uint8_t *)EEPROM.getConstDataPtr();
         s_all_settings_ROM *_p_all_settings_ROM = (s_all_settings_ROM *)EEPROM.getConstDataPtr();
-        // s_all_settings_ROM *_p_all_settings_ROM = NULL;
-        // get_p_all_settings_ROM(_p_all_settings_ROM); // EEPROM.getConstDataPtr();
         if (_p_all_settings_ROM) // если нет указателя
         {
             rsdebugInflnF("Сохраняем все данные:");
@@ -357,7 +189,73 @@ void NotSaveEmptyMemorySettings(void)
     EmptyMemorySettingsNTP(true);
     // EmptyMemorySettingsNTC(true);
 }
+#elif defined(EEPROM_CPP)
+uint32_t g_last_request_EEPROM;
+c_all_settings_def def_data;
+c_all_settings_rom rom_data;
+c_all_settings_ram ram_data;
 
+bool SaveAllSettings(void)
+{
+    if (ram_data.unsaved)
+    {
+        if (!EEPROM.getConstDataPtr())
+            EEPROM.begin(len_all_settings_ROM);
+        s_all_settings_ROM *_p_all_settings_ROM = (s_all_settings_ROM *)EEPROM.getConstDataPtr();
+        if (_p_all_settings_ROM) // если есть указатель
+        {
+            rsdebugInflnF("Сохраняем все данные:");
+            rsdebugDnflnF("Сохраняем данные SYS");
+            memcpy(&_p_all_settings_ROM->sys_settings_ROM, ram_data.p_SYS_settings(), len_sys_settings_ROM);
+            rsdebugDnflnF("Сохраняем данные ethernet");
+            memcpy(&_p_all_settings_ROM->ethernet_settings_ROM, ram_data.p_NET_settings(), len_ethernet_settings_ROM);
+            rsdebugDnflnF("Сохраняем данные NTP");
+            memcpy(&_p_all_settings_ROM->NTP_settings_ROM, ram_data.p_NTP_settings(), len_NTP_settings_ROM);
+            calcCRC(_p_all_settings_ROM, len_all_settings_ROM); // вычисляем CRC
+            EEPROM.getDataPtr();                                // установить флаг "данные изменились" для сохранения при EEPROM.end()
+            ram_data.unsaved = false;
+        }
+        else
+            rsdebugEnflnF("Нет указателя на данные из ROM");
+        EEPROM.end();
+        return true;
+    }
+    else
+    {
+        rsdebugWnflnF("Нет изменений - не сохраняем");
+        return false;
+    }
+}
+
+#endif
+
+// если данные в ROM не валидны - записываем "по-умолчанию"
+void ROMVerifySettingsElseSaveDefault(bool force)
+{
+    EEPROM.begin(len_all_settings_ROM);
+    s_all_settings_ROM *_p_all_settings_ROM = (s_all_settings_ROM *)EEPROM.getConstDataPtr();
+    if (_p_all_settings_ROM)
+    {
+        rsdebugInfF("Проверяем CRC ROM");
+        rsdebugInfln("$%d", len_all_settings_ROM);
+        if (!force && compareCRC(_p_all_settings_ROM, len_all_settings_ROM)) // если данные в памяти валидны
+        {
+            rsdebugInflnF("Данные в ROM ok");
+        }
+        else
+        {
+            rsdebugWnflnF("Данные в ROM not ok");
+            s_all_settings_ROM def_all_settings_ROM;
+            calcCRC(&def_all_settings_ROM, len_all_settings_ROM);                     // данные по умолчанию не имеют вычесленого CRC !!! - вычисляем
+            memcpy(_p_all_settings_ROM, &def_all_settings_ROM, len_all_settings_ROM); // заполняем данными по умолчанию
+            rsdebugInflnF("Устанавливаем настройки по умолчанию");
+            EEPROM.getDataPtr(); // установить флаг "данные изменились" для сохранения при EEPROM.end()
+        }
+    }
+    else
+        rsdebugEnflnF("Нет указателя на данные из ROM");
+    EEPROM.end();
+}
 bool compareCRC(void *p_struct, uint16_t len) // Вычисляем crc: true - crc ok
 {
     return (*(uint16_t *)p_struct == CRC16(((uint8_t *)p_struct) + len_crc, len - len_crc));
@@ -370,31 +268,13 @@ void calcCRC(void *p_struct, uint16_t len) // Вычисляем crc
 
 void cb_ut_emptymemory(void)
 {
-    // if (NeedSaveSettings.all)
-    // {
-    //     rsdebugDnfln("NeedSaveSettings: %d", NeedSaveSettings.all);
-    // }
-    // if (g_p_sys_settings_ROM)
-    // {
-    //     rsdebugDnflnF("g_p_sys_settings_ROM");
-    // }
-    // if (g_p_ethernet_settings_ROM)
-    // {
-    //     rsdebugDnflnF("g_p_ethernet_settings_ROM");
-    // }
-    // if (g_p_NTP_settings_ROM)
-    // {
-    //     rsdebugDnflnF("g_p_ethernet_settings_ROM");
-    // }
-    // rsdebugDnfln("bit.NTP: %s", NeedSaveSettings.bit.NTP ? "1" : "0");
-    // rsdebugDnfln("bit.OTA: %s", NeedSaveSettings.bit.OTA ? "1" : "0");
-    // rsdebugDnfln("bit.RSDebug: %s", isNSS_allRSDebug ? "1" : "0");
-    // rsdebugDnfln("bit.SysMon: %s", NeedSaveSettings.bit.SysMon ? "1" : "0");
-    // rsdebugDnfln("bit.WIFI: %s", NeedSaveSettings.bit.WIFI ? "1" : "0");
-    // rsdebugDnfln("bit.MQTT: %s", NeedSaveSettings.bit.MQTT ? "1" : "0");
-    if (wifi_state == _wifi_connected)
-        EmptyMemorySettingsEthernet();
+#if defined(EEPROM_C)
+    EmptyMemorySettingsEthernet();
     EmptyMemorySettingsSys();
     EmptyMemorySettingsNTP();
-    // EmptyMemorySettingsNTC();
+#elif defined(EEPROM_CPP)
+    def_data.is_all_del();
+    ram_data.is_all_del();
+    rom_data.is_all_del();
+#endif
 }

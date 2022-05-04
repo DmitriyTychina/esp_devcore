@@ -10,9 +10,13 @@
 
 void init_OTA(void)
 {
+#if defined(EEPROM_C)
 	LoadInMemorySettingsSys();
 	// rsdebugDln("*****g_p_sys_settings_ROM->OTA_Ttask: %d", g_p_sys_settings_ROM->OTA_Ttask);
 	ut_OTA.setInterval(g_p_sys_settings_ROM->OTA_Ttask);
+#elif defined(EEPROM_CPP)
+	ut_OTA.setInterval(ram_data.p_SYS_settings()->OTA_Ttask);
+#endif
 	// EmptyMemorySettingsSys();
 
 	// rsdebuglnF("init_OTA");
@@ -39,8 +43,12 @@ void init_OTA(void)
 			rsdebugEnfln("*OTA: Error[%u]: ", error);});
 			// Serial.printf("*OTA: Error[%u]: ", error);
 			// rsdebugDln("*****g_p_sys_settings_ROM->OTA_Ttask: %d", g_p_sys_settings_ROM->OTA_Ttask);
+#if defined(EEPROM_C)
 			LoadInMemorySettingsSys();
 			ut_OTA.setInterval(g_p_sys_settings_ROM->OTA_Ttask);
+#elif defined(EEPROM_CPP)
+			ut_OTA.setInterval(ram_data.p_SYS_settings()->OTA_Ttask);
+#endif
 			// ut_sysmon.setInterval(g_p_sys_settings_ROM->SysMon_Ttask);
 			// ut_sysmon.enable();
 			// LoadInMemorySettingsEthernet();

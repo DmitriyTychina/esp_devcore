@@ -19,7 +19,10 @@ uint8_t cnt_errorNTP = 0; // счетчик ошибок получения да
 uint8_t NumServerNTP = 0; // номер текущего сервера NTP
 
 // NTPClient NTP; определен в <NtpClientLib.h>
+#if defined(EEPROM_C)
 s_NTP_settings_ROM *g_p_NTP_settings_ROM = NULL;
+#elif defined(EEPROM_CPP)
+#endif
 
 void processSyncEvent(NTPSyncEvent_t _ntpEvent)
 {
@@ -29,15 +32,22 @@ void processSyncEvent(NTPSyncEvent_t _ntpEvent)
 		if (++cnt_errorNTP > qnt_errorNTP)
 		{
 			cnt_errorNTP = 0;
+#if defined(EEPROM_C)
 			if (++NumServerNTP >= sizeof(g_p_NTP_settings_ROM->serversNTP) / sizeof(g_p_NTP_settings_ROM->serversNTP[0]))
-			{
 				NumServerNTP = 0;
-			}
+#elif defined(EEPROM_CPP)
+			if (++NumServerNTP >= sizeof(ram_data.p_NTP_settings()->serversNTP) / sizeof(ram_data.p_NTP_settings()->serversNTP[0]))
+				NumServerNTP = 0;
+#endif
 		}
 		rsdebugWnfF("cnt_errorNTP:");
 		rsdebugWnfln("%d of %d", cnt_errorNTP, qnt_errorNTP);
 		rsdebugWnfF("ServerNTP");
+#if defined(EEPROM_C)
 		rsdebugWnfln("[%d]:%s", NumServerNTP, g_p_NTP_settings_ROM->serversNTP[NumServerNTP]);
+#elif defined(EEPROM_CPP)
+		rsdebugWnfln("[%d]:%s", NumServerNTP, ram_data.p_NTP_settings()->serversNTP[NumServerNTP]);
+#endif
 		// NTP.begin(g_p_NTP_settings_ROM->serversNTP[NumServerNTP], g_p_NTP_settings_ROM->timezone, false /*переход на летнее/зимнее*/, minutesTimeZone);
 		rsdebugEnfln("Time Sync error:%d", _ntpEvent);
 		init_NTP_with_WiFi();
@@ -92,10 +102,16 @@ void init_NTP_with_WiFi(void)
 	// rsdebugDln("timezone: %d", g_p_NTP_settings_ROM->timezone);
 	// rsdebugDln("serversNTP[%d]: %s", NumServerNTP, g_p_NTP_settings_ROM->serversNTP[NumServerNTP]);
 
-	NTP.setInterval(60 * g_p_NTP_settings_ROM->T_syncNTP); // период синхронизации в секундах - у нас в минутах
 	NTP.setNTPTimeout(NTP_TIMEOUT);						   // в миллисекундах таймаут ответа сервера NTP
+#if defined(EEPROM_C)
+	NTP.setInterval(60 * g_p_NTP_settings_ROM->T_syncNTP); // период синхронизации в секундах - у нас в минутах
 	NTP.begin(g_p_NTP_settings_ROM->serversNTP[NumServerNTP], g_p_NTP_settings_ROM->timezone, false /*переход на летнее/зимнее*/, minutesTimeZone);
 	ut_NTP.setInterval(g_p_NTP_settings_ROM->Ttask);
+#elif defined(EEPROM_CPP)
+	NTP.setInterval(60 * ram_data.p_NTP_settings()->T_syncNTP); // период синхронизации в секундах - у нас в минутах
+	NTP.begin(ram_data.p_NTP_settings()->serversNTP[NumServerNTP], ram_data.p_NTP_settings()->timezone, false /*переход на летнее/зимнее*/, minutesTimeZone);
+	ut_NTP.setInterval(ram_data.p_NTP_settings()->Ttask);
+#endif
 	ut_NTP.enable();
 }
 

@@ -58,7 +58,11 @@ String get_glob_reason(bool _wait)
   return (tmp_str);
 }
 
+#if defined(EEPROM_C)
 s_sys_settings_ROM *g_p_sys_settings_ROM = NULL;
+#elif defined(EEPROM_CPP)
+
+#endif
 
 // Экземпляры классов
 // NTC c_NTC;
@@ -70,10 +74,16 @@ volatile unsigned long uTask::iCPUCore = 0;
 volatile unsigned long uTask::iCPUTT = 0;
 
 // ****************** Независимые задачи
-uTask ut_wifi(WiFi_TtaskDefault, &cb_ut_state_wifi);                      // Подключение к wifi
-uTask ut_sysmon(SysMon_TtaskDefault, &cb_ut_sysmon);                      // sysmon
-uTask ut_debuglog(RSDebug_TtaskDefault, &cb_ut_debuglog);                 // RSDedug
+uTask ut_wifi(WiFi_TtaskDefault, &cb_ut_state_wifi);      // Подключение к wifi
+uTask ut_sysmon(SysMon_TtaskDefault, &cb_ut_sysmon);      // sysmon
+uTask ut_debuglog(RSDebug_TtaskDefault, &cb_ut_debuglog); // RSDedug
+// #if defined(EEPROM_C) || defined(EEPROM_CPP)
+// #endif
+// #if defined(EEPROM_C)
 uTask ut_emptymemory(emptymemory_TtaskDefault, &cb_ut_emptymemory, true); // автоматически очищаем память
+// #elif defined(EEPROM_CPP)
+
+// #endif
 
 #ifdef USER_AREA
 // ****!!!!@@@@####$$$$%%%%^^^^USER_AREA_BEGIN
@@ -104,6 +114,26 @@ void setup()
   // rsdebugInfln("Причина сброса: %s", get_glob_reason(true).c_str());
   rsdebugInflnF("***Проверка сохраненных настроек***");
   ROMVerifySettingsElseSaveDefault();
+  // rsdebugInfln("***MQTT_user[%s]", ram_data.p_NET_settings()->MQTT_user);
+  // rsdebugInfln("***MQTT_user[%s]", ram_data.p_NET_settings()->MQTT_pass);
+  // rsdebugInfln("***MQTT_user[%d]", ram_data.p_NET_settings()->MQTT_Ttask);
+  // rsdebugInfln("***MQTT_user[%d]", ram_data.p_NET_settings()->WiFi_Ttask);
+  // rsdebugInfln("***MQTT_user[%s]", ram_data.p_NET_settings()->settings_serv[0].SSID);
+  // rsdebugInfln("***MQTT_user[%s]", ram_data.p_NET_settings()->settings_serv[0].MQTTip);
+  // rsdebugInfln("***MQTT_user[%s]", ram_data.p_NET_settings()->settings_serv[0].PASS);
+  // rsdebugInfln("***MQTT_user[%s]", ram_data.p_NET_settings()->settings_serv[1].SSID);
+  // rsdebugInfln("***MQTT_user[%s]", ram_data.p_NET_settings()->settings_serv[1].MQTTip);
+  // rsdebugInfln("***MQTT_user[%s]", ram_data.p_NET_settings()->settings_serv[1].PASS);
+  // rsdebugInfln("***MQTT_user[%s]", ram_data.p_NET_settings()->settings_serv[2].SSID);
+  // rsdebugInfln("***MQTT_user[%s]", ram_data.p_NET_settings()->settings_serv[2].MQTTip);
+  // rsdebugInfln("***MQTT_user[%s]", ram_data.p_NET_settings()->settings_serv[2].PASS);
+  // rsdebugInfln("***MQTT_user[%s]", ram_data.p_NET_settings()->settings_serv[3].SSID);
+  // rsdebugInfln("***MQTT_user[%s]", ram_data.p_NET_settings()->settings_serv[3].MQTTip);
+  // rsdebugInfln("***MQTT_user[%s]", ram_data.p_NET_settings()->settings_serv[3].PASS);
+  // rsdebugInfln("***MQTT_user[%s]", ram_data.p_NET_settings()->settings_serv[4].SSID);
+  // rsdebugInfln("***MQTT_user[%s]", ram_data.p_NET_settings()->settings_serv[4].MQTTip);
+  // rsdebugInfln("***MQTT_user[%s]", ram_data.p_NET_settings()->settings_serv[4].PASS);
+
   // optimistic_Core(2000000);
   rsdebugInflnF("***Инициализация модулей***");
   rsdebugInflnF("--SysMon init");

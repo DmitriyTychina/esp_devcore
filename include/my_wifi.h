@@ -35,36 +35,7 @@ extern e_state_WiFi wifi_state; // Состояние WIFi
 
 #define WiFi_TtaskDefault 251
 
-struct s_settings_serv
-{
-    char SSID[16];          // Имя точки WiFi
-    char PASS[24];          // Пароль точки WiFi
-    char MQTTip[lenMQTTip]; // IP сервера MQTT в этой сети
-    // char MQTTlogin[8]; // Логин сервера MQTT
-    // char MQTTpass[8];  // Пароль сервера MQTT
-};
-
-struct s_ethernet_settings_ROM
-{
-    // uint16_t crc;
-    uint32_t WiFi_Ttask = WiFi_TtaskDefault;
-    s_settings_serv settings_serv[5] = {{WIFI_SSID3, WIFI_PASS3, IPmqttWIFI3},
-                                        {WIFI_SSID2, WIFI_PASS2, IPmqttWIFI2},
-                                        {WIFI_SSID1, WIFI_PASS1, IPmqttWIFI1},
-                                        {WIFI_SSID4, WIFI_PASS4, IPmqttWIFI4},
-                                        {WIFI_SSID5, WIFI_PASS5, IPmqttWIFI5}}; // Параметры точкек WiFi и серверов MQTT в этих сетях
-    char MQTT_user[lenMQTTuser] = mqtt_user;                                    // Логин сервера MQTT
-    char MQTT_pass[lenMQTTpass] = mqtt_pass;                                    // Пароль сервера MQTT
-    uint32_t MQTT_Ttask = MQTT_TtaskDefault;
-    // bool stawebserver = false;                                                                                          // Разрешить web-сервер в режиме клиента
-    //    char apName[16] = my_AP_NAME;                                                             // Имя точки доступа WiFi
-    //    char apPass[24] = my_AP_PASS;                                                             // Пароль точки доступа WiFi
-    //    uint8_t apIP[4] = IPAP;                                                                   // IP web-cервера точки доступа WiFi
-    // uint16_t Tms = 500; // Период, мс --- для шедулера -не нужен -меняем динамически
-};
-
 void init_WiFi();
 uint8_t get_idx_eth(String str_ssid);
 void cb_ut_state_wifi(void);
 
-extern s_ethernet_settings_ROM *g_p_ethernet_settings_ROM;

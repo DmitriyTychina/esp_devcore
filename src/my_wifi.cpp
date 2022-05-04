@@ -18,7 +18,10 @@ uint16_t wifi_count_conn; // количество (пере)подключени
 e_state_WiFi wifi_state;  // Состояние WIFi
 // uint8_t idx_eth_rom = 0; // номер записи в g_p_ethernet_settings_ROM - для получения адреса сервера MQTT
 
+#if defined(EEPROM_C)
 s_ethernet_settings_ROM *g_p_ethernet_settings_ROM = NULL;
+#elif defined(EEPROM_CPP)
+#endif
 
 inline void dependent_tasks_enable() // WiFi:Запускаем зависимые задачи
 {
@@ -101,6 +104,7 @@ void init_WiFi()
 
 uint8_t get_idx_eth(String str_ssid) // 0 - не нашли, idx_eth_rom = +1
 {
+#if defined(EEPROM_C)
     for (uint8_t _idx = 0; _idx < sizeof(g_p_ethernet_settings_ROM->settings_serv) / sizeof(g_p_ethernet_settings_ROM->settings_serv[0]); _idx++)
     {
         if (str_ssid == g_p_ethernet_settings_ROM->settings_serv[_idx].SSID)
@@ -110,6 +114,17 @@ uint8_t get_idx_eth(String str_ssid) // 0 - не нашли, idx_eth_rom = +1
         }
     }
     return 0;
+#elif defined(EEPROM_CPP)
+    for (uint8_t _idx = 0; _idx < sizeof(ram_data.p_NET_settings()->settings_serv) / sizeof(ram_data.p_NET_settings()->settings_serv[0]); _idx++)
+    {
+        if (str_ssid == ram_data.p_NET_settings()->settings_serv[_idx].SSID)
+        {
+            // нашли надо подключаться
+            return _idx + 1;
+        }
+    }
+    return 0;
+#endif
 }
 
 void cb_ut_state_wifi(void)
@@ -181,8 +196,13 @@ void cb_ut_state_wifi(void)
                     // rsdebugDnfln("***8 %d", g_p_ethernet_settings_ROM);
                     // WiFi.mode(WIFI_STA);
                     rsdebugInfF("Соединяемся с WiFi");
+#if defined(EEPROM_C)
                     rsdebugInfln("[%d]: %s", _idx, g_p_ethernet_settings_ROM->settings_serv[_idx].SSID);
                     WiFi.begin(g_p_ethernet_settings_ROM->settings_serv[_idx].SSID, g_p_ethernet_settings_ROM->settings_serv[_idx].PASS);
+#elif defined(EEPROM_CPP)
+                    rsdebugInfln("[%d]: %s", _idx, ram_data.p_NET_settings()->settings_serv[_idx].SSID);
+                    WiFi.begin(ram_data.p_NET_settings()->settings_serv[_idx].SSID, ram_data.p_NET_settings()->settings_serv[_idx].PASS);
+#endif
                     wifi_state = _wifi_connecting;
                     _stopwatch = millis();
                     break;
@@ -219,7 +239,11 @@ void cb_ut_state_wifi(void)
         // rsdebugDnflnF("*************************** 1");
         // rsdebugDnfln("***13 %d", g_p_ethernet_settings_ROM);
         // LoadInMemorySettingsSys();
+#if defined(EEPROM_C)
         ut_wifi.setInterval(g_p_ethernet_settings_ROM->WiFi_Ttask);
+#elif defined(EEPROM_CPP)
+        ut_wifi.setInterval(ram_data.p_NET_settings()->WiFi_Ttask);
+#endif
         // rsdebugDnflnF("*************************** 2");
         // rsdebugDnfln("***14 %d", g_p_ethernet_settings_ROM);
         dependent_tasks_enable(); // WiFi:Запускаем зависимые задачи

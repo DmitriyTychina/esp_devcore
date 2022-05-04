@@ -10,26 +10,41 @@
 
 void MQTT_pub_allSettings(bool fromROM)
 {
-  s_all_settings_ROM def_all_settings_ROM;
   s_ethernet_settings_ROM *p_ethernet_settings;
   s_sys_settings_ROM *p_sys_settings;
   s_NTP_settings_ROM *p_NTP_settings;
+#if defined(EEPROM_C)
+  s_all_settings_ROM def_all_settings_ROM;
+#elif defined(EEPROM_CPP)
+#endif
   if (fromROM)
   {
     rsdebugInflnF("Публикуем текущие данные"); // ROM или памяти если не сохранены
+#if defined(EEPROM_C)
     LoadInMemorySettingsEthernet();
     p_ethernet_settings = g_p_ethernet_settings_ROM;
     LoadInMemorySettingsSys();
     p_sys_settings = g_p_sys_settings_ROM;
     LoadInMemorySettingsNTP();
     p_NTP_settings = g_p_NTP_settings_ROM;
+#elif defined(EEPROM_CPP)
+    p_ethernet_settings = ram_data.p_NET_settings();
+    p_sys_settings = ram_data.p_SYS_settings();
+    p_NTP_settings = ram_data.p_NTP_settings();
+#endif
   }
   else
   {
     rsdebugInflnF("Публикуем данные по умолчанию");
+#if defined(EEPROM_C)
     p_ethernet_settings = &def_all_settings_ROM.ethernet_settings_ROM;
     p_sys_settings = &def_all_settings_ROM.sys_settings_ROM;
     p_NTP_settings = &def_all_settings_ROM.NTP_settings_ROM;
+#elif defined(EEPROM_CPP)
+    p_ethernet_settings = def_data.p_NET_settings();
+    p_sys_settings = def_data.p_SYS_settings();
+    p_NTP_settings = def_data.p_NTP_settings();
+#endif
   }
 
   // публикуем все сетевые настройки
@@ -57,7 +72,7 @@ void MQTT_pub_allSettings(bool fromROM)
   mqtt_publish(dirs_topic, v_enable, p_sys_settings->RSDebug_SDebug /* ? "yes" : "no"*/);
   dirs_topic[3] = d_r_debug; // {d_main_topic, d_settings, d_rs_debug, d_r_debug}
   mqtt_publish(dirs_topic, v_enable, p_sys_settings->RSDebug_RDebug /* ? "yes" : "no"*/);
-  dirs_topic[3] = d_empty; // {d_main_topic, d_settings, d_rs_debug, d_empty}
+  dirs_topic[3] = d_empty;  // {d_main_topic, d_settings, d_rs_debug, d_empty}
   dirs_topic[2] = d_sysmon; // {d_main_topic, d_settings, d_sysmon, d_empty}
   mqtt_publish(dirs_topic, v_t_task, p_sys_settings->SysMon_Ttask);
   dirs_topic[2] = d_ota; // {d_main_topic, d_settings, d_ota, d_empty}
