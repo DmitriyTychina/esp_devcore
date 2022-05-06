@@ -39,15 +39,18 @@ inline void dependent_tasks_enable() // WiFi:Запускаем зависимы
 
 inline void dependent_tasks_disable() // WiFi:Останавливаем зависимые задачи
 {
-    rsdebugnflnF("-Останавливаем задачи зависимые от WiFi");
-    rsdebugInflnF("--MQTT disable");
-    StopMqtt();
-    rsdebugInflnF("--NTP disable");
-    ut_NTP.disable();
-    rsdebugInflnF("--OTA disable");
-    ut_OTA.disable();
-    rsdebugInflnF("--RSDebuglog disable");
-    ut_debuglog.disable();
+    if (wifi_count_conn)
+    {
+        rsdebugnflnF("-Останавливаем задачи зависимые от WiFi");
+        rsdebugInflnF("--MQTT disable");
+        StopMqtt();
+        rsdebugInflnF("--NTP disable");
+        ut_NTP.disable();
+        rsdebugInflnF("--OTA disable");
+        ut_OTA.disable();
+        rsdebugInflnF("--RSDebuglog disable");
+        ut_debuglog.disable();
+    }
 }
 
 /* ------------------------------------------------- */

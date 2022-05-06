@@ -30,3 +30,6 @@ Flash: [====      ]  35.8% (used 373572 bytes from 1044464 bytes)
 #5 после переделки EEPROM
 RAM:   [====      ]  39.8% (used 32584 bytes from 81920 bytes)
 Flash: [====      ]  35.8% (used 373576 bytes from 1044464 bytes)
+#6 реорганизация дерева значений MQTT + много чего в MQTT
+RAM:   [====      ]  41.5% (used 33972 bytes from 81920 bytes)
+Flash: [====      ]  36.0% (used 376180 bytes from 1044464 bytes)

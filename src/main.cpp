@@ -12,6 +12,7 @@
 
 // Глобальные переменные для постоянного хранения в памяти
 // uint8 glob_reason;
+
 String get_glob_reason(bool _wait)
 {
   //     REASON_DEFAULT_RST = 0,      /* включение питания */

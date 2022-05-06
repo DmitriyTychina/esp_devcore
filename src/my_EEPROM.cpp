@@ -227,6 +227,36 @@ bool SaveAllSettings(void)
     }
 }
 
+void print_free_up_net(bool _flag, String _pre_str)
+{
+    if (_flag)
+    {
+        rsdebugInf(_pre_str.c_str());
+        rsdebugInfF(": Очищаем память от сетевых настроек");
+        rsdebugInfln("$%d", len_ethernet_settings_ROM);
+    }
+};
+
+void print_free_up_sys(bool _flag, String _pre_str)
+{
+    if (_flag)
+    {
+        rsdebugInf(_pre_str.c_str());
+        rsdebugInfF(": Очищаем память от системных настроек");
+        rsdebugInfln("$%d", len_sys_settings_ROM);
+    }
+};
+
+void print_free_up_NTP(bool _flag, String _pre_str)
+{
+    if (_flag)
+    {
+        rsdebugInf(_pre_str.c_str());
+        rsdebugInfF(": Очищаем память от настроек NTP");
+        rsdebugInfln("$%d", len_NTP_settings_ROM);
+    }
+};
+
 #endif
 
 // если данные в ROM не валидны - записываем "по-умолчанию"
@@ -256,6 +286,7 @@ void ROMVerifySettingsElseSaveDefault(bool force)
         rsdebugEnflnF("Нет указателя на данные из ROM");
     EEPROM.end();
 }
+
 bool compareCRC(void *p_struct, uint16_t len) // Вычисляем crc: true - crc ok
 {
     return (*(uint16_t *)p_struct == CRC16(((uint8_t *)p_struct) + len_crc, len - len_crc));
@@ -274,7 +305,8 @@ void cb_ut_emptymemory(void)
     EmptyMemorySettingsNTP();
 #elif defined(EEPROM_CPP)
     def_data.is_all_del();
-    ram_data.is_all_del();
+    if (!ram_data.unsaved)
+        ram_data.is_all_del();
     rom_data.is_all_del();
 #endif
 }

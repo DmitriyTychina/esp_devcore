@@ -7,6 +7,9 @@
 #include "my_MQTT_pub.h"
 #include "my_EEPROM.h"
 
+bool v_b_SysMon_info_to_mqtt = true;
+bool v_b_SysMon_info_to_rsdebug = true;
+
 void SysMon_Init(void)
 {
   ut_sysmon.StartStopwatchCore();
@@ -16,6 +19,8 @@ void SysMon_Init(void)
   ut_sysmon.setInterval(g_p_sys_settings_ROM->SysMon_Ttask);
 #elif defined(EEPROM_CPP)
   ut_sysmon.setInterval(ram_data.p_SYS_settings()->SysMon_Ttask);
+  v_b_SysMon_info_to_mqtt = ram_data.p_SYS_settings()->SysMon_info_to_mqtt;
+  v_b_SysMon_info_to_rsdebug = ram_data.p_SYS_settings()->SysMon_info_to_rsdebug;
 #endif
   // rsdebugDnflnF("#2");
   ut_sysmon.cpuLoadReset();
@@ -26,50 +31,35 @@ void SysMon_Init(void)
 
 void cb_ut_sysmon(void)
 {
-  // ut_sysmon.setInterval(4000);
+  uint32_t FreeRAM, RAMFragmentation, MaxFreeBlockSize;
+  unsigned long cpuTot;
+  float CPUload, CPUCore, CPUidle;
 
-  // rsdebugInfln("***********************************************");
-
-  // rsdebugInfln("getResetReason: %s", ESP.getResetReason().c_str());//1
-  // rsdebugInfln("getFreeHeap: %d", ESP.getFreeHeap());                   //*
-  // rsdebugInfln("getHeapFragmentation: %d", ESP.getHeapFragmentation()); //*
-  // rsdebugInfln("getMaxFreeBlockSize: %d", ESP.getMaxFreeBlockSize());   //*
-  // // rsdebugInfln("getChipId: %d", ESP.getChipId());
-  // rsdebugInfln("getCoreVersion: %s", ESP.getCoreVersion());//1
-  // rsdebugInfln("getSdkVersion: %s", ESP.getSdkVersion());//1
-  // rsdebugInfln("getCpuFreqMHz: %d", ESP.getCpuFreqMHz());//1*?
-  // rsdebugInfln("getSketchSize: %d", ESP.getSketchSize());//1
-  // rsdebugInfln("getFreeSketchSpace: %d", ESP.getFreeSketchSpace());//1
-  // // rsdebugInfln("getSketchMD5: %s", ESP.getSketchMD5().c_str());
-  // // rsdebugInfln("getFlashChipId: %d", ESP.getFlashChipId());
-  // rsdebugInfln("getFlashChipSize: %d", ESP.getFlashChipSize());
-  // rsdebugInfln("getFlashChipRealSize: %d", ESP.getFlashChipRealSize());//1
-  // rsdebugInfln("getFlashChipSpeed: %d", ESP.getFlashChipSpeed());//1
-  // // rsdebugInfln("getCycleCount: %d", ESP.getCycleCount());
-
-  rsdebugInf("\n");
-  rsdebugInfln("***********************************************");
-  uint32_t freeRAM = ESP.getFreeHeap();
-  uint32_t RAMFragmentation = ESP.getHeapFragmentation();
-  uint32_t MaxFreeBlockSize = ESP.getMaxFreeBlockSize();
-  e_IDDirTopic dirs_topic[] = {d_main_topic, d_info, d_sysmon, d_empty};
-  // rsdebugInfln("FreeSketchSpace: %u", ESP.getFreeSketchSpace());
-  unsigned long cpuTot = ut_sysmon.getCpuLoadTotal();
-  float CPUload = (float)ut_sysmon.getCpuLoadCycle() / (float)cpuTot * 100;
-  float CPUCore = (float)ut_sysmon.getCpuLoadCore() / (float)cpuTot * 100;
-  float CPUidle = 100 - CPUload - CPUCore;
-  mqtt_publish(dirs_topic, v_free_ram, freeRAM);
-  mqtt_publish(dirs_topic, v_cpu_load_work, (float)CPUload, "%.3f");
-  mqtt_publish(dirs_topic, v_cpu_load_core, (float)CPUCore, "%.3f");
-  // rsdebugInfln("CPU cpuTot %u of time.", cpuTot);
-  rsdebugInfln("FreeRAM: %d", freeRAM);
-  rsdebugInfln("RAMFragmentation: %d", RAMFragmentation); //*
-  rsdebugInfln("MaxFreeBlockSize: %d", MaxFreeBlockSize); //*
-  rsdebugInfln("CPUload core %.3f %%", CPUCore);
-  rsdebugInfln("CPUload work %.3f %%", CPUload);
-  rsdebugInfln("CPUload sleep %.3f %%", CPUidle);
-  // rsdebugDnfln("wifi_station_get_rssi: %d", wifi_station_get_rssi());
-  // rsdebugDnfln("WiFi.SSID: %s", WiFi.SSID().c_str());
-
+  if (v_b_SysMon_info_to_mqtt || v_b_SysMon_info_to_rsdebug)
+  {
+    FreeRAM = ESP.getFreeHeap();
+    RAMFragmentation = ESP.getHeapFragmentation();
+    MaxFreeBlockSize = ESP.getMaxFreeBlockSize();
+    cpuTot = ut_sysmon.getCpuLoadTotal();
+    CPUload = (float)ut_sysmon.getCpuLoadCycle() / (float)cpuTot * 100;
+    CPUCore = (float)ut_sysmon.getCpuLoadCore() / (float)cpuTot * 100;
+    CPUidle = 100 - CPUload - CPUCore;
+  }
+  if (v_b_SysMon_info_to_rsdebug)
+  {
+    rsdebugInf("\n");
+    rsdebugInfln("***********************************************");
+    // rsdebugInfln("CPU cpuTot %u of time.", cpuTot);
+    if (wifi_state == _wifi_connected)
+      rsdebugInfln("WiFi.RSSI: %d", WiFi.RSSI());
+    rsdebugInfln("FreeRAM: %d", FreeRAM);
+    rsdebugInfln("RAMFragmentation: %d", RAMFragmentation); //*
+    rsdebugInfln("MaxFreeBlockSize: %d", MaxFreeBlockSize); //*
+    rsdebugInfln("CPUload core %.3f %%", CPUCore);
+    rsdebugInfln("CPUload work %.3f %%", CPUload);
+    rsdebugInfln("CPUload sleep %.3f %%", CPUidle);
+  }
+  if (v_b_SysMon_info_to_mqtt)
+    MQTT_pub_SysInfo(FreeRAM, RAMFragmentation, MaxFreeBlockSize, CPUload, CPUCore);
   // ut_sysmon.cpuLoadReset(); // здесь не надо !!!
 }

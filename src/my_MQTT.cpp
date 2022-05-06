@@ -24,34 +24,42 @@ e_state_MQTT MQTT_state;      // Состояние подключения к MQ
 uint16_t mqtt_count_conn = 0; // количество (пере)подключений к серверу mqtt
 // #define mqtt_count_conn_reset 200
 
-void mqtt_init(uint8_t _idx)
+uint8_t mqtt_init(void)
 {
   LoadInMemorySettingsEthernet();
-  rsdebugInflnF("---MQTTinit");
-  // for (uint8_t aaa = 0; aaa < 5; aaa++)
-  //   rsdebugInfln("------%s %d", g_p_ethernet_settings_ROM->settings_serv[aaa].MQTTip, aaa);
-  if (mqtt_count_conn == 0)
-  { // нужно делать только один раз, иначе калбеки вызываются по нескольку раз
-    client.onMessage(onMessageReceived);
-    // client.onPublish(onMessagePublish); // для Led - лучше что-нибудь другое
-    client.onConnect(onMqttConnect);
-    client.onDisconnect(onMqttDisconnect);
-  }
-  // else if (mqtt_count_conn == mqtt_count_conn_reset)
-  //   ESP.restart();
+  // rsdebugInflnF("---MQTTinit");
+  uint8_t _idx = get_idx_eth(WiFi.SSID());
+  if (_idx)
+  {
+    // mqtt_init(_idx);
+    // for (uint8_t aaa = 0; aaa < 5; aaa++)
+    //   rsdebugInfln("------%s %d", g_p_ethernet_settings_ROM->settings_serv[aaa].MQTTip, aaa);
+    if (mqtt_count_conn == 0)
+    { // нужно делать только один раз, иначе калбеки вызываются по нескольку раз
+      mqtt_count_conn++;
+      client.onMessage(onMessageReceived);
+      // client.onPublish(onMessagePublish); // для Led - лучше что-нибудь другое
+      client.onConnect(onMqttConnect);
+      client.onDisconnect(onMqttDisconnect);
+    }
+    // else if (mqtt_count_conn == mqtt_count_conn_reset)
+    //   ESP.restart();
 
 #if defined(EEPROM_C)
-  ut_MQTT.setInterval(g_p_ethernet_settings_ROM->MQTT_Ttask);
-  client.setServer(g_p_ethernet_settings_ROM->settings_serv[_idx].MQTTip, 1883);
-  client.setCredentials(g_p_ethernet_settings_ROM->MQTT_user, g_p_ethernet_settings_ROM->MQTT_pass);
+    client.setServer(g_p_ethernet_settings_ROM->settings_serv[_idx].MQTTip, 1883);
+    client.setCredentials(g_p_ethernet_settings_ROM->MQTT_user, g_p_ethernet_settings_ROM->MQTT_pass);
 #elif defined(EEPROM_CPP)
-  ut_MQTT.setInterval(ram_data.p_NET_settings()->MQTT_Ttask);
-  client.setServer(ram_data.p_NET_settings()->settings_serv[_idx].MQTTip, 1883);
-  client.setCredentials(ram_data.p_NET_settings()->MQTT_user, ram_data.p_NET_settings()->MQTT_pass);
+    client.setServer(ram_data.p_NET_settings()->settings_serv[_idx - 1].MQTTip, 1883);
+    client.setCredentials(ram_data.p_NET_settings()->MQTT_user, ram_data.p_NET_settings()->MQTT_pass);
 #endif
-  client.setClientId(OTA_NAME);
-  // client.setCleanSession(true);
-  // g_num_serv = num_serv;
+    client.setClientId(OTA_NAME);
+    // client.setCleanSession(true);
+  }
+  else
+  {
+    rsdebugInfF("Нет адреса MQTT сервера");
+  }
+  return _idx;
 }
 
 void cb_ut_MQTT()
@@ -72,28 +80,23 @@ void cb_ut_MQTT()
       else if (MQTT_state == _MQTT_disconnected)
       {
         LoadInMemorySettingsEthernet();
-        uint8_t _idx = get_idx_eth(WiFi.SSID());
+        uint8_t _idx = mqtt_init();
         if (_idx)
         {
-          _idx--;
-          mqtt_init(_idx);
           rsdebugInfF("Подключаемся к MQTT серверу");
 #if defined(EEPROM_C)
           rsdebugInfln("[%d]:%s", _idx, g_p_ethernet_settings_ROM->settings_serv[_idx].MQTTip);
 #elif defined(EEPROM_CPP)
-          rsdebugInfln("[%d]:%s", _idx, ram_data.p_NET_settings()->settings_serv[_idx].MQTTip);
+          rsdebugInfln("[%d]:%s", _idx, ram_data.p_NET_settings()->settings_serv[_idx - 1].MQTTip);
 #endif
           MQTT_state = _MQTT_connecting;
-          ut_MQTT.forceNextIteration();
+          // ut_MQTT.forceNextIteration();
+          ut_MQTT.setInterval(1003);
         }
-        else
-        {
-          rsdebugInfF("Нет адреса MQTT сервера");
-        }
-        ut_MQTT.setInterval(1003);
       }
       else if (MQTT_state == _MQTT_connecting)
       {
+        mqtt_init();
         rsdebugnfF(".");
         client.connect();
       }
@@ -189,9 +192,9 @@ void MQTTconnected(void)
   last_payload[0] = 0;
 #endif
   // rsdebugInflnF("MQTTconnected");
-  mqtt_count_conn++;
-  rsdebugInfF(" -подключение к MQTT №");
+  rsdebugInfF(" -подключились к MQTT#");
   rsdebugInfln("%d", mqtt_count_conn);
+  mqtt_count_conn++;
   // публикуем при подключении
   MQTT_pub_allInfo(wifi_count_conn == 1);
   // подписываемся на все из массива _arr_SubscribeElement
@@ -225,20 +228,23 @@ void onMqttConnect(bool sessionPresent)
 
 void onMqttDisconnect(AsyncMqttClientDisconnectReason reason)
 {
-  // rsdebugDnfln("onMqttDisconnect[%d]", (uint8_t)reason);
-  // ut_MQTT.forceNextIteration();
-  // MQTT_state = _MQTT_on_disconnected;
-  MQTT_state = _MQTT_disconnected;
+  if (MQTT_state != _MQTT_connecting)
+  {
+    // rsdebugDnfln("onMqttDisconnect[%d]", (uint8_t)reason);
+    // ut_MQTT.forceNextIteration();
+    // MQTT_state = _MQTT_on_disconnected;
+    MQTT_state = _MQTT_disconnected;
+  }
   // }
 }
 
-String CreateTopic(e_IDDirTopic *_IDDirTopic, e_IDVarTopic _IDVarTopic)
+String CreateTopic(o_IDDirTopic *_IDDirTopic, e_IDVarTopic _IDVarTopic)
 {
   String result = ""; // "mqtt/0/";
-  for (uint8_t i = 0; i < size_IDDirTopic; i++)
+  for (uint8_t i = 0; i < _IDDirTopic->_len_IDDirTopic; i++)
   {
-    result.concat(ArrDirTopic[_IDDirTopic[i]]);
-    if (_IDDirTopic[i] != 0)
+    result.concat(ArrDirTopic[_IDDirTopic->_IDDirTopic[i]]);
+    if (_IDDirTopic->_IDDirTopic[i] != 0)
       result.concat("/");
   }
   result.concat(ArrVarTopic[_IDVarTopic]);
@@ -247,7 +253,7 @@ String CreateTopic(e_IDDirTopic *_IDDirTopic, e_IDVarTopic _IDVarTopic)
 // String CreateTopic(e_IDDirTopic *_IDDirTopic, String _VarTopic)
 // {
 //   String result = "";
-//   for (uint8_t i = 0; i < size_IDDirTopic; i++)
+//   for (uint8_t i = 0; i < MQTT_MAX_LEVEL; i++)
 //   {
 //     result.concat(ArrDirTopic[_IDDirTopic[i]]);
 //     if (_IDDirTopic[i] != 0)

@@ -26,12 +26,13 @@ s_NTP_settings_ROM *g_p_NTP_settings_ROM = NULL;
 
 void processSyncEvent(NTPSyncEvent_t _ntpEvent)
 {
+	String _str = F("no");
 	if (_ntpEvent < 0)
 	{
-	LoadInMemorySettingsNTP();
+		LoadInMemorySettingsNTP();
 		if (++cnt_errorNTP > qnt_errorNTP)
 		{
-			cnt_errorNTP = 0;
+			cnt_errorNTP = 1;
 #if defined(EEPROM_C)
 			if (++NumServerNTP >= sizeof(g_p_NTP_settings_ROM->serversNTP) / sizeof(g_p_NTP_settings_ROM->serversNTP[0]))
 				NumServerNTP = 0;
@@ -50,6 +51,27 @@ void processSyncEvent(NTPSyncEvent_t _ntpEvent)
 #endif
 		// NTP.begin(g_p_NTP_settings_ROM->serversNTP[NumServerNTP], g_p_NTP_settings_ROM->timezone, false /*переход на летнее/зимнее*/, minutesTimeZone);
 		rsdebugEnfln("Time Sync error:%d", _ntpEvent);
+		if (_ntpEvent == noResponse)
+		{
+			_str = F("NTP server not reachable");
+		}
+		else if (_ntpEvent == invalidAddress)
+		{
+			_str = F("Invalid NTP server address");
+		}
+		else if (_ntpEvent == errorSending)
+		{
+			_str = F("Error sending request");
+		}
+		else if (_ntpEvent == responseError)
+		{
+			_str = F("NTP response error");
+		}
+		else
+		{
+			_str = F("NTP undefined error");
+		}
+		rsdebugEln(_str.c_str());
 		init_NTP_with_WiFi();
 	}
 	else if (_ntpEvent == timeSyncd)
@@ -63,24 +85,8 @@ void processSyncEvent(NTPSyncEvent_t _ntpEvent)
 		rsdebugInfF("Uptime: ");
 		rsdebugInfln("%s since %s", NTP.getUptimeString().c_str(), NTP.getTimeDateString(NTP.getFirstSync()).c_str());
 		// EmptyMemorySettingsNTP();
-		MQTT_pub_Info_TimeReset();
 	}
-	else if (_ntpEvent == noResponse)
-	{
-		rsdebugElnF("NTP server not reachable");
-	}
-	else if (_ntpEvent == invalidAddress)
-	{
-		rsdebugElnF("Invalid NTP server address");
-	}
-	else if (_ntpEvent == errorSending)
-	{
-		rsdebugElnF("Error sending request");
-	}
-	else if (_ntpEvent == responseError)
-	{
-		rsdebugElnF("NTP response error");
-	}
+	MQTT_pub_Info_NTP(_str);
 }
 
 void init_NTP(void)
@@ -98,17 +104,17 @@ void init_NTP_with_WiFi(void)
 	rsdebugInflnF("---StartNTP");
 	LoadInMemorySettingsNTP();
 
-	// rsdebugDln("T_syncNTP: %d", g_p_NTP_settings_ROM->T_syncNTP);
+	// rsdebugDln("PeriodSyncNTP: %d", g_p_NTP_settings_ROM->PeriodSyncNTP);
 	// rsdebugDln("timezone: %d", g_p_NTP_settings_ROM->timezone);
 	// rsdebugDln("serversNTP[%d]: %s", NumServerNTP, g_p_NTP_settings_ROM->serversNTP[NumServerNTP]);
 
-	NTP.setNTPTimeout(NTP_TIMEOUT);						   // в миллисекундах таймаут ответа сервера NTP
+	NTP.setNTPTimeout(NTP_TIMEOUT); // в миллисекундах таймаут ответа сервера NTP
 #if defined(EEPROM_C)
-	NTP.setInterval(60 * g_p_NTP_settings_ROM->T_syncNTP); // период синхронизации в секундах - у нас в минутах
+	NTP.setInterval(60 * g_p_NTP_settings_ROM->PeriodSyncNTP); // период синхронизации в секундах - у нас в минутах
 	NTP.begin(g_p_NTP_settings_ROM->serversNTP[NumServerNTP], g_p_NTP_settings_ROM->timezone, false /*переход на летнее/зимнее*/, minutesTimeZone);
 	ut_NTP.setInterval(g_p_NTP_settings_ROM->Ttask);
 #elif defined(EEPROM_CPP)
-	NTP.setInterval(60 * ram_data.p_NTP_settings()->T_syncNTP); // период синхронизации в секундах - у нас в минутах
+	NTP.setInterval(60 * ram_data.p_NTP_settings()->PeriodSyncNTP); // период синхронизации в секундах - у нас в минутах
 	NTP.begin(ram_data.p_NTP_settings()->serversNTP[NumServerNTP], ram_data.p_NTP_settings()->timezone, false /*переход на летнее/зимнее*/, minutesTimeZone);
 	ut_NTP.setInterval(ram_data.p_NTP_settings()->Ttask);
 #endif
