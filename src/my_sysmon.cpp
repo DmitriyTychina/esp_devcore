@@ -38,8 +38,8 @@ void cb_ut_sysmon(void)
   if (v_b_SysMon_info_to_mqtt || v_b_SysMon_info_to_rsdebug)
   {
     FreeRAM = ESP.getFreeHeap();
-    RAMFragmentation = ESP.getHeapFragmentation();
-    MaxFreeBlockSize = ESP.getMaxFreeBlockSize();
+    // RAMFragmentation = ESP.getHeapFragmentation();
+    // MaxFreeBlockSize = ESP.getMaxFreeBlockSize();
     cpuTot = ut_sysmon.getCpuLoadTotal();
     CPUload = (float)ut_sysmon.getCpuLoadCycle() / (float)cpuTot * 100;
     CPUCore = (float)ut_sysmon.getCpuLoadCore() / (float)cpuTot * 100;

@@ -1,7 +1,7 @@
+#ifdef CORE_NTP
 #include <Arduino.h>
 #include <TimeLib.h>
 #include <WiFiUdp.h>
-// #include <NtpClientLib.h>
 
 #include "my_scheduler.h"
 #include "my_NTP.h"
@@ -129,3 +129,4 @@ void cb_ut_NTP(void)
 		syncEventTriggered = false;
 	}
 }
+#endif

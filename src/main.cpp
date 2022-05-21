@@ -6,13 +6,13 @@
 // #include <espconn.h> // — основной файл API со структурами и процедурами по работе с TCP и UDP соединениями.
 // #include <mem.h> // — работа с памятью, os_malloc, os_free и т.п.
 // #include <gpio.h> // — вспомогательные
-#include <user_interface.h> //для system_get_rst_info()
-
 #include "main.h"
 
 // Глобальные переменные для постоянного хранения в памяти
 // uint8 glob_reason;
 
+#if defined(ESP8266)
+#include <user_interface.h> //для system_get_rst_info()
 String get_glob_reason(bool _wait)
 {
   //     REASON_DEFAULT_RST = 0,      /* включение питания */
@@ -22,9 +22,9 @@ String get_glob_reason(bool _wait)
   //     REASON_SOFT_RESTART = 4,     /* программный сброс , GPIO не изменяются */
   //     REASON_DEEP_SLEEP_AWAKE = 5, /* выход из глубокого сна */
   //     REASON_EXT_SYS_RST = 6       /* аппаратный сброс */
-  rst_info *p_rst_info;
-  p_rst_info = system_get_rst_info(); // причина сброса
-  uint8 glob_reason = p_rst_info->reason;
+  rst_info *rst_info;
+  rst_info = system_get_rst_info(); // причина сброса
+  uint8 glob_reason = rst_info->reason;
   if (_wait && (glob_reason != REASON_DEFAULT_RST) && (glob_reason != REASON_EXT_SYS_RST) && (glob_reason != REASON_SOFT_RESTART /* после прошивки OTA */))
   {
     os_delay_us(500000); // чтобы при "непонятных" сбросах данные не мелькали в serial-порту
@@ -58,6 +58,69 @@ String get_glob_reason(bool _wait)
   }
   return (tmp_str);
 }
+#elif defined(ESP32)
+String get_glob_reason(bool _wait)
+{
+    // ESP_RST_UNKNOWN,    //!< Reset reason can not be determined
+    // ESP_RST_POWERON,    //!< Reset due to power-on event
+    // ESP_RST_EXT,        //!< Reset by external pin (not applicable for ESP32)
+    // ESP_RST_SW,         //!< Software reset via esp_restart
+    // ESP_RST_PANIC,      //!< Software reset due to exception/panic
+    // ESP_RST_INT_WDT,    //!< Reset (software or hardware) due to interrupt watchdog
+    // ESP_RST_TASK_WDT,   //!< Reset due to task watchdog
+    // ESP_RST_WDT,        //!< Reset due to other watchdogs
+    // ESP_RST_DEEPSLEEP,  //!< Reset after exiting deep sleep mode
+    // ESP_RST_BROWNOUT,   //!< Brownout reset (software or hardware)
+    // ESP_RST_SDIO,       //!< Reset over SDIO
+  esp_reset_reason_t rst_info = esp_reset_reason(); // причина сброса
+  if (_wait && (rst_info != ESP_RST_POWERON) && (rst_info != ESP_RST_EXT) && (rst_info != ESP_RST_SW /* после прошивки OTA */))
+  {
+    ets_delay_us(500000); // чтобы при "непонятных" сбросах данные не мелькали в serial-порту
+  }
+  String tmp_str;
+  switch (rst_info)
+  {
+  case ESP_RST_UNKNOWN:
+    tmp_str = F("[0]ESP_RST_UNKNOWN");
+    break;
+  case ESP_RST_POWERON:
+    tmp_str = F("[1]ESP_RST_POWERON");
+    break;
+  case ESP_RST_EXT:
+    tmp_str = F("[2]ESP_RST_EXT");
+    break;
+  case ESP_RST_SW:
+    tmp_str = F("[3]ESP_RST_SW");
+    break;
+  case ESP_RST_PANIC:
+    tmp_str = F("[4]ESP_RST_PANIC");
+    break;
+  case ESP_RST_INT_WDT:
+    tmp_str = F("[5]ESP_RST_INT_WDT");
+    break;
+  case ESP_RST_TASK_WDT:
+    tmp_str = F("[6]ESP_RST_TASK_WDT");
+    break;
+  case ESP_RST_WDT:
+    tmp_str = F("[7]ESP_RST_WDT");
+    break;
+  case ESP_RST_DEEPSLEEP:
+    tmp_str = F("[8]ESP_RST_DEEPSLEEP");
+    break;
+  case ESP_RST_BROWNOUT:
+    tmp_str = F("[9]ESP_RST_BROWNOUT");
+    break;
+  case ESP_RST_SDIO:
+    tmp_str = F("[10]ESP_RST_SDIO");
+    break;
+  default:
+    tmp_str = F("Unknown");
+  }
+  return (tmp_str);
+}
+#endif
+
+
 
 #if defined(EEPROM_C)
 s_sys_settings_ROM *g_p_sys_settings_ROM = NULL;
@@ -99,7 +162,9 @@ uTask ut_door(door_TtaskDefault, &cb_ut_door, true);
 
 // ****************** Зависящие от подключения к wifi
 uTask ut_OTA(OTA_TtaskDefault, &cb_ut_ota);    // OTA
+#ifdef CORE_NTP
 uTask ut_NTP(NTP_TtaskDefault, &cb_ut_NTP);    // time NTP
+#endif
 uTask ut_MQTT(MQTT_TtaskDefault, &cb_ut_MQTT); // MQTT
 
 void setup()
@@ -154,8 +219,10 @@ void setup()
   init_WiFi();
   rsdebugInflnF("--OTA init");
   init_OTA();
+#ifdef CORE_NTP
   rsdebugInflnF("--NTP init");
   init_NTP();
+#endif
 
 #ifdef USER_AREA
 // ****!!!!@@@@####$$$$%%%%^^^^USER_AREA_BEGIN
@@ -176,13 +243,12 @@ void loop()
   // rsdebugInflnF("#2");
   ut_wifi.execute();
   // rsdebugInflnF("#3");
-  // ut_OTA.execute();
   ut_MQTT.execute();
   // rsdebugInflnF("#4");
-  // ut_OTA.execute();
+#ifdef CORE_NTP
   ut_NTP.execute();
+#endif
   // rsdebugInflnF("#5");
-  // ut_OTA.execute();
 
 #ifdef USER_AREA
   // ****!!!!@@@@####$$$$%%%%^^^^USER_AREA_BEGIN
@@ -194,13 +260,10 @@ void loop()
 // USER_AREA_END****!!!!@@@@####$$$$%%%%^^^^
 #endif // USER_AREA
 
-  // ut_OTA.execute();
   ut_debuglog.execute();
   // rsdebugInflnF("#7");
-  // ut_OTA.execute();
   ut_emptymemory.execute();
   // rsdebugInflnF("#8");
-  // ut_OTA.execute();
   if (ut_sysmon.execute()) // должна быть последняя в loop()
     ut_sysmon.cpuLoadReset();
   // rsdebugInflnF("#9");

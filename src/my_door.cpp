@@ -1,6 +1,13 @@
 #ifdef USER_AREA
 // ****!!!!@@@@####$$$$%%%%^^^^USER_AREA_BEGIN
+#include <Arduino.h>
 #include "my_door.h"
+// #include "device_def.h"
+// #include "my_debuglog.h"
+#include "my_MQTT.h"
+#include "my_MQTT_pub.h"
+#include "my_MQTT_sub.h"
+// #include "my_scheduler.h"
 
 #define LATCH_STATE_MACHINE
 
@@ -42,7 +49,8 @@ void refresh_state_door(bool _state_door)
   state_door = _state_door;
   e_IDDirTopic dirs_topic[] = {d_main_topic, d_devices, d_door, d_status};
   const char *chr_state_door = (_state_door ^ statedoor_openlevel) ? "open" : "close";
-  mqtt_publish(dirs_topic, v_open, chr_state_door);
+  o_IDDirTopic o_dirs_topic = {dirs_topic, (uint32_t)(sizeof(dirs_topic) / sizeof(dirs_topic[0]))};
+  mqtt_publish(&o_dirs_topic, v_open, chr_state_door);
   rsdebugInfln("Door[%s]", chr_state_door);
   // openlatch(); //test
 }
@@ -52,7 +60,6 @@ void latch_execute(bool start)
 {
   static uint32_t start_timer = 0;
   static e_state_latch state_latch = _IDLE;
-  e_IDDirTopic dirs_topic[] = {d_main_topic, d_devices, d_door, d_status};
   const char *chr_state_latch = NULL;
   if (start)
   {
@@ -103,7 +110,9 @@ void latch_execute(bool start)
   }
   if (chr_state_latch != NULL)
   {
-    mqtt_publish(dirs_topic, v_latch, chr_state_latch);
+  e_IDDirTopic dirs_topic[] = {d_main_topic, d_devices, d_door, d_status};
+    o_IDDirTopic o_dirs_topic = {dirs_topic, (uint32_t)(sizeof(dirs_topic) / sizeof(dirs_topic[0]))};
+  mqtt_publish(&o_dirs_topic, v_latch, chr_state_latch);
     rsdebugInfln("Latch[%s]", chr_state_latch);
     // rsdebugDnfln("start[%s]", start ? "1" : "0");
     // rsdebugDnfln("state_latch[%d]", state_latch);
@@ -203,9 +212,10 @@ void onStartMQTT_pub_door(void)
   // rsdebugDnfln("onStartMQTT_pub_door");
   refresh_state_door();
   e_IDDirTopic dirs_topic[] = {d_main_topic, d_devices, d_door, d_commands};
-  mqtt_publish_ok(dirs_topic, v_latch);
-  dirs_topic[3] = {d_status};
-  mqtt_publish(dirs_topic, v_latch, "close");
+  o_IDDirTopic o_dirs_topic = {dirs_topic, (uint32_t)(sizeof(dirs_topic) / sizeof(dirs_topic[0]))};
+  mqtt_publish_ok(&o_dirs_topic, v_latch);
+  o_dirs_topic._IDDirTopic[3] = {d_status};
+  mqtt_publish(&o_dirs_topic, v_latch, "close");
 }
 
 // USER_AREA_END****!!!!@@@@####$$$$%%%%^^^^

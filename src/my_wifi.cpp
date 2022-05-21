@@ -1,5 +1,9 @@
 #include <Arduino.h>
+#if defined(ESP8266)
 #include <ESP8266WiFi.h>
+#elif defined(ESP32)
+#include <WiFi.h>
+#endif
 
 #include "my_wifi.h"
 #include "my_scheduler.h"
@@ -30,8 +34,10 @@ inline void dependent_tasks_enable() // WiFi:Запускаем зависимы
     init_rdebuglog();
     rsdebugInflnF("--OTA enable");
     ut_OTA.enable(); // всегда работает когда есть WiFi
+#ifdef CORE_NTP
     rsdebugInflnF("--NTP enable");
     init_NTP_with_WiFi(); // t_NTP.enable() - внутри
+#endif
     rsdebugInflnF("--MQTT enable");
     // mqtt_init();
     StartMqtt();
@@ -44,8 +50,10 @@ inline void dependent_tasks_disable() // WiFi:Останавливаем зав�
         rsdebugnflnF("-Останавливаем задачи зависимые от WiFi");
         rsdebugInflnF("--MQTT disable");
         StopMqtt();
+#ifdef CORE_NTP
         rsdebugInflnF("--NTP disable");
         ut_NTP.disable();
+#endif
         rsdebugInflnF("--OTA disable");
         ut_OTA.disable();
         rsdebugInflnF("--RSDebuglog disable");
@@ -88,15 +96,22 @@ void init_WiFi()
 {
     WiFi.disconnect(); // - должно произойти событие?! - не происходит!
     wifi_count_conn = 0;
-    if (WiFi.getPersistent())
+#if defined(ESP8266)
+    if (WiFi.getgetPersistent())
+#endif
         WiFi.persistent(false); // чтоб не записывать во flash(и не протирать) параметры WiFi при WiFi.begin
     if (WiFi.getAutoConnect())
         WiFi.setAutoConnect(false); // надо разобраться с механизмом
     if (WiFi.getAutoReconnect())
         WiFi.setAutoReconnect(false); // надо разобраться с механизмом, попробую, может перестанет терять сеть-не перестал
     WiFi.mode(WIFI_STA);
+#if defined(ESP8266)
     WiFi.onEvent(onStaModeGotIP, WIFI_EVENT_STAMODE_GOT_IP);              // - регистрируем событие: получение IP
     WiFi.onEvent(onStaModeDisconnected, WIFI_EVENT_STAMODE_DISCONNECTED); // - регистрируем событие: дисконнект
+#elif defined(ESP32)
+    WiFi.onEvent(onStaModeGotIP, ARDUINO_EVENT_WIFI_STA_GOT_IP);              // - регистрируем событие: получение IP
+    WiFi.onEvent(onStaModeDisconnected, ARDUINO_EVENT_WIFI_STA_DISCONNECTED); // - регистрируем событие: дисконнект
+#endif
     WiFi.hostname(OTA_NAME);
     // wifi_state = _wifi_disconnected; // надо?
     // yield();

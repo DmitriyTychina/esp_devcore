@@ -11,7 +11,9 @@ void MQTT_pub_allSettings(e_settings_from from)
 {
   s_ethernet_settings_ROM *p_ethernet_settings;
   s_sys_settings_ROM *p_sys_settings;
+#ifdef CORE_NTP
   s_NTP_settings_ROM *p_NTP_settings;
+#endif
 #if defined(EEPROM_C)
   s_all_settings_ROM def_all_settings_ROM;
 #elif defined(EEPROM_CPP)
@@ -28,7 +30,9 @@ void MQTT_pub_allSettings(e_settings_from from)
 #elif defined(EEPROM_CPP)
     p_ethernet_settings = def_data.p_NET_settings();
     p_sys_settings = def_data.p_SYS_settings();
+#ifdef CORE_NTP
     p_NTP_settings = def_data.p_NTP_settings();
+#endif
 #endif
     break;
   case from_rom:
@@ -38,7 +42,9 @@ void MQTT_pub_allSettings(e_settings_from from)
 #elif defined(EEPROM_CPP)
     p_ethernet_settings = rom_data.p_NET_settings();
     p_sys_settings = rom_data.p_SYS_settings();
+#ifdef CORE_NTP
     p_NTP_settings = rom_data.p_NTP_settings();
+#endif
 #endif
     break;
   case from_ram:
@@ -53,7 +59,9 @@ void MQTT_pub_allSettings(e_settings_from from)
 #elif defined(EEPROM_CPP)
     p_ethernet_settings = ram_data.p_NET_settings();
     p_sys_settings = ram_data.p_SYS_settings();
+#ifdef CORE_NTP
     p_NTP_settings = ram_data.p_NTP_settings();
+#endif
 #endif
     break;
   default:
@@ -79,16 +87,18 @@ void MQTT_pub_allSettings(e_settings_from from)
   mqtt_publish(&o_dirs_topic, v_t_task, p_ethernet_settings->MQTT_Ttask);
   mqtt_publish(&o_dirs_topic, v_user, "*****" /* p_ethernet_settings->MQTT_login */);
   mqtt_publish(&o_dirs_topic, v_pass, "*****" /* p_ethernet_settings->MQTT_pass */);
+#ifdef CORE_NTP
   // NET/NTP
   o_dirs_topic._IDDirTopic[2] = d_ntp; // {d_main_topic, d_net, d_ntp, d_settings, d_empty, d_empty}
   mqtt_publish(&o_dirs_topic, v_t_task, p_NTP_settings->Ttask);
-  mqtt_publish(&o_dirs_topic, v_t_sync, p_NTP_settings->PeriodSyncNTP);
+  mqtt_publish(&o_dirs_topic, v_t_sync, (uint32_t)p_NTP_settings->PeriodSyncNTP);
   mqtt_publish(&o_dirs_topic, v_ip1, p_NTP_settings->serversNTP[0]);
   mqtt_publish(&o_dirs_topic, v_ip2, p_NTP_settings->serversNTP[1]);
   mqtt_publish(&o_dirs_topic, v_ip3, p_NTP_settings->serversNTP[2]);
-  mqtt_publish(&o_dirs_topic, v_timezone, p_NTP_settings->timezone);
+  mqtt_publish(&o_dirs_topic, v_timezone, (int32_t)p_NTP_settings->timezone);
   o_dirs_topic._IDDirTopic[4] = d_astro; // {d_main_topic, d_net, d_ntp, d_settings, d_astro, d_empty}
-  mqtt_publish(&o_dirs_topic, v_enable, p_NTP_settings->timezone);
+  mqtt_publish(&o_dirs_topic, v_enable, p_NTP_settings->astro);
+#endif
   o_dirs_topic._IDDirTopic[4] = d_empty; // {d_main_topic, d_net, d_ntp, d_settings, d_empty, d_empty}
   // NET/OTA
   o_dirs_topic._IDDirTopic[2] = d_ota; // {d_main_topic, d_net, d_ota, d_settings, d_empty, d_empty}
@@ -141,6 +151,7 @@ void MQTT_pub_allSettings(e_settings_from from)
 #endif // USER_AREA
 }
 
+#ifdef CORE_NTP
 void MQTT_pub_Info_NTP(String _str = "")
 {
   e_IDDirTopic dirs_topic[] = {d_main_topic, d_system, d_chip_esp}; // ok
@@ -153,12 +164,13 @@ void MQTT_pub_Info_NTP(String _str = "")
     mqtt_publish(&o_dirs_topic, v_error, _str.c_str());
   // Astro
 }
+#endif
 
 void MQTT_pub_SysInfo(uint32_t _FreeRAM, uint32_t _RAMFragmentation, uint32_t _MaxFreeBlockSize, float _CPUload, float _CPUCore)
 {
   e_IDDirTopic dirs_topic[] = {d_main_topic, d_system, d_sysmon}; // ok
   o_IDDirTopic o_dirs_topic = {dirs_topic, (uint32_t)(sizeof(dirs_topic) / sizeof(dirs_topic[0]))};
-  mqtt_publish(&o_dirs_topic, v_current_wifi_rssi, WiFi.RSSI());
+  mqtt_publish(&o_dirs_topic, v_current_wifi_rssi, (int32_t)WiFi.RSSI());
   // o_dirs_topic._IDDirTopic[1] = d_system;
   // o_dirs_topic._IDDirTopic[2] = d_ram;
   mqtt_publish(&o_dirs_topic, v_free_ram, _FreeRAM);
@@ -187,12 +199,16 @@ void MQTT_pub_allInfo(bool _all)
   o_IDDirTopic o_dirs_topic = {dirs_topic, (uint32_t)(sizeof(dirs_topic) / sizeof(dirs_topic[0]))};
   mqtt_publish(&o_dirs_topic, v_current_wifi_ssid, WiFi.SSID().c_str());
   mqtt_publish(&o_dirs_topic, v_currentip, WiFi.localIP().toString().c_str());
-  mqtt_publish(&o_dirs_topic, v_cnt_reconn_wifi, wifi_count_conn);
+  mqtt_publish(&o_dirs_topic, v_cnt_reconn_wifi, (uint32_t)wifi_count_conn);
   // NET/MQTT
   o_dirs_topic._IDDirTopic[2] = d_mqtt; // {d_main_topic, d_net, d_mqtt, d_empty, d_empty, d_empty}
-  mqtt_publish(&o_dirs_topic, v_cnt_reconn_mqtt, mqtt_count_conn);
+  mqtt_publish(&o_dirs_topic, v_cnt_reconn_mqtt, (uint32_t)mqtt_count_conn);
+
+#ifdef CORE_NTP
   // NET/NTP
   MQTT_pub_Info_NTP();
+#endif
+
   // // только после сброса
   // if (_all)
   // {
@@ -202,16 +218,20 @@ void MQTT_pub_allInfo(bool _all)
   mqtt_publish_no(&o_dirs_topic, vc_ReadAll);
   // System/Flash
   o_dirs_topic._IDDirTopic[2] = d_flash; // {d_main_topic, d_system, d_flash, d_empty, d_empty, d_empty}
-  mqtt_publish(&o_dirs_topic, v_total_size, ESP.getFlashChipRealSize());
+  mqtt_publish(&o_dirs_topic, v_total_size, ESP.getFlashChipSize());
   mqtt_publish(&o_dirs_topic, v_size_sketch, ESP.getSketchSize());
   mqtt_publish(&o_dirs_topic, v_free_size_sketh, ESP.getFreeSketchSpace());
   mqtt_publish(&o_dirs_topic, v_flash_freq, ESP.getFlashChipSpeed() / 1000000);
   // System/RAM
   o_dirs_topic._IDDirTopic[2] = d_ram; // {d_main_topic, d_system, d_ram, d_empty, d_empty, d_empty}
-  mqtt_publish(&o_dirs_topic, v_total_size, 81920);
+#if defined(ESP8266)
+  mqtt_publish(&o_dirs_topic, v_total_size, (uint32_t)81920);
+#elif defined(ESP32)
+  mqtt_publish(&o_dirs_topic, v_total_size, (uint32_t)327680);
+#endif
   // System/ROM
   o_dirs_topic._IDDirTopic[2] = d_rom; // {d_main_topic, d_system, d_rom, d_empty, d_empty, d_empty}
-  mqtt_publish(&o_dirs_topic, v_total_size, 4096);
+  mqtt_publish(&o_dirs_topic, v_total_size, (uint32_t)4096);
   mqtt_publish(&o_dirs_topic, v_used, (uint32_t)len_all_settings_ROM);
   mqtt_publish_no(&o_dirs_topic, vc_ReadDef);
   mqtt_publish_no(&o_dirs_topic, vc_ReadROM);
@@ -221,7 +241,7 @@ void MQTT_pub_allInfo(bool _all)
   o_dirs_topic._IDDirTopic[2] = d_chip_esp; // {d_main_topic, d_system, d_chip_esp, d_empty, d_empty, d_empty}
   mqtt_publish(&o_dirs_topic, v_reason_reset, get_glob_reason().c_str());
   mqtt_publish(&o_dirs_topic, v_cpu_freq, ESP.getCpuFreqMHz());
-  mqtt_publish(&o_dirs_topic, v_ver_core, ESP.getCoreVersion().c_str());
+  // mqtt_publish(&o_dirs_topic, v_ver_core, ESP.cogetCoreVersion().c_str());
   mqtt_publish(&o_dirs_topic, v_ver_sdk, ESP.getSdkVersion());
   mqtt_publish_ok(&o_dirs_topic, vc_Debug);
   // System/StatusLED

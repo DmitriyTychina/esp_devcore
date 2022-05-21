@@ -1,18 +1,18 @@
 #pragma once
 
-#include <Arduino.h>
-#include "device_def.h"
-#include "my_debuglog.h"
+// #include <Arduino.h>
+// #include "device_def.h"
+// #include "my_debuglog.h"
 #include "my_MQTT.h"
-#include "my_MQTT_pub.h"
-#include "my_MQTT_sub.h"
-#include "my_scheduler.h"
-// #include "main.h"
 // #include "my_MQTT_pub.h"
 // #include "my_MQTT_sub.h"
-// #include "my_EEPROM.h"
-// #include "my_NTC.h"
-// #include "SensorData.h"
+// #include "my_scheduler.h"
+// // #include "main.h"
+// // #include "my_MQTT_pub.h"
+// // #include "my_MQTT_sub.h"
+// // #include "my_EEPROM.h"
+// // #include "my_NTC.h"
+// // #include "SensorData.h"
 
 
 #define door_TtaskDefault 50

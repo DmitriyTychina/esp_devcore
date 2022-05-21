@@ -1,7 +1,11 @@
 #pragma once
 
 #include <Arduino.h>
+#if defined(ESP8266)
 #include <ESP8266WiFi.h>
+#elif defined(ESP32)
+#include <WiFi.h>
+#endif
 #include "AsyncMqttClient.h"
 #include "device_def.h"
 
@@ -11,7 +15,7 @@
 // #define MQTT_QUEUE
 
 // не более 255, индекс массива везде 8 бит
-enum e_IDDirTopic : uint8 // в паре с ArrDirTopic[]
+enum e_IDDirTopic// : uint8 // в паре с ArrDirTopic[]
 {
     d_empty,
     d_main_topic,
@@ -104,7 +108,7 @@ const char ArrDirTopic[_LastElement_e_IDDirTopic][MQTT_MAX_SYMBOLS] /* PROGMEM *
         "Commands"};
 
 // не более 255, индекс массива везде используем 8бит
-enum e_IDVarTopic : uint8 // в паре с ArrVarTopic[]
+enum e_IDVarTopic// : uint8 // в паре с ArrVarTopic[]
 {
     v_empty,
     v_all,

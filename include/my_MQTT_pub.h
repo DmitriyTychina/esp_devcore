@@ -7,7 +7,9 @@ void MQTT_pub_allSettings(e_settings_from from);
 
 // void MQTT_pub_Commands_ok(e_IDVarTopic _IDVarTopic);
 // void MQTT_pub_Settings_ok(e_IDVarTopic _IDVarTopic);
+#ifdef CORE_NTP
 void MQTT_pub_Info_NTP(String _str);
+#endif
 void MQTT_pub_SysInfo(uint32_t _FreeRAM, uint32_t _RAMFragmentation, uint32_t _MaxFreeBlockSize, float _CPUload, float _CPUCore);
 void MQTT_pub_allInfo(bool _all);
 

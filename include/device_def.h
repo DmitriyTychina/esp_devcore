@@ -2,6 +2,9 @@
 
 #include "global_def.h"
 
+// #define CORE_NTP
+
+
 // #define OTA_NAME "ESP-0000" // Имя сетевого порта для удаленной прошивки
 // #define OTA_PASS "0000"     // Пароль доступа для удаленной прошивки
 

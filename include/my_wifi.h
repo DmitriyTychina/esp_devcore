@@ -1,12 +1,16 @@
 #pragma once
 
 #include <Arduino.h>
+#if defined(ESP8266)
 #include <ESP8266WiFi.h>
+#elif defined(ESP32)
+#include <WiFi.h>
+#endif
 
 #include "device_def.h"
 #include "my_MQTT.h"
 
-enum e_state_WiFi : uint8
+enum e_state_WiFi // : uint8
 {
     _wifi_disconnected,    // отключены
     _wifi_startfindAP,     // запуск поиска точек доступа

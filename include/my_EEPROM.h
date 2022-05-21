@@ -2,7 +2,7 @@
 
 #include <Arduino.h>
 #include <EEPROM.h>
-#include <typeinfo>
+// #include <typeinfo>
 
 #include "main.h"
 #include "my_wifi.h"
@@ -75,6 +75,7 @@ struct s_sys_settings_ROM
     // uint8_t ver[6] = "00.20";      // Версия ПО // Один раз по MQTT
 };
 
+#ifdef CORE_NTP
 struct s_NTP_settings_ROM
 {
     char serversNTP[3][24] = {"132.163.96.1", "ntp2.stratum2.ru", "pool.ntp.org"}; // NTP-сервера времени
@@ -83,6 +84,7 @@ struct s_NTP_settings_ROM
     uint32_t Ttask = NTP_TtaskDefault;
     bool astro = true;
 };
+#endif
 
 struct s_all_settings_ROM
 {
@@ -90,7 +92,9 @@ struct s_all_settings_ROM
     // uint16_t len;
     s_ethernet_settings_ROM ethernet_settings_ROM;
     s_sys_settings_ROM sys_settings_ROM;
+#ifdef CORE_NTP
     s_NTP_settings_ROM NTP_settings_ROM;
+#endif
     // uint16_t crc3=1;
     // uint16_t crc2=0;
 };
@@ -109,12 +113,14 @@ struct s_all_settings_ROM
 // #define len_ethernet_settings_ROM sizeof(g_p_EEPROM->ethernet_settings_ROM)
 #define len_ethernet_settings_ROM sizeof(s_all_settings_ROM::ethernet_settings_ROM)
 
+#ifdef CORE_NTP
 // #define addr_NTP_settings_ROM (addr_ethernet_settings_ROM + len_ethernet_settings_ROM) // такая запись давала адрес на 2 байта меньше (???)
 // #define addr_NTP_settings_ROM (((uint8_t *)&g_p_EEPROM->NTP_settings_ROM) - (uint8_t *)g_p_EEPROM) // только такая запись давала реальный адрес
 // #define addr_NTP_settings_ROM (uint32_t)(&((struct s_all_settings_ROM*)0)->NTP_settings_ROM)
 #define addr_NTP_settings_ROM offsetof(s_all_settings_ROM, NTP_settings_ROM)
 // #define len_NTP_settings_ROM sizeof(g_p_EEPROM->NTP_settings_ROM)
 #define len_NTP_settings_ROM sizeof(s_all_settings_ROM::NTP_settings_ROM)
+#endif
 
 // // #define addr_NTC_settings_ROM (addr_NTP_settings_ROM + len_NTP_settings_ROM)
 // #define addr_NTC_settings_ROM ((char *)&g_p_EEPROM->NTC_settings_ROM - (char *)g_p_EEPROM)
@@ -390,26 +396,36 @@ protected:
 
 void print_free_up_net(bool _flag, String _pre_str);
 void print_free_up_sys(bool _flag, String _pre_str);
+#ifdef CORE_NTP
 void print_free_up_NTP(bool _flag, String _pre_str);
+#endif
 
 class c_all_settings_def
 {
 public:
     c_unit_settings_def<s_ethernet_settings_ROM> p_NET_settings;
     c_unit_settings_def<s_sys_settings_ROM> p_SYS_settings;
+#ifdef CORE_NTP
     c_unit_settings_def<s_NTP_settings_ROM> p_NTP_settings;
+#endif
     bool is_all_del(bool force = false)
     {
         // bool ret = false;
-        bool b_NET = p_NET_settings.del_p_s(force);
-        bool b_SYS = p_SYS_settings.del_p_s(force);
-        bool b_NTP = p_NTP_settings.del_p_s(force);
         // const char* _str = "DEF";
         String _str = F("DEF");
+        bool b_NET = p_NET_settings.del_p_s(force);
         print_free_up_net(b_NET, _str);
+        bool b_SYS = p_SYS_settings.del_p_s(force);
         print_free_up_sys(b_SYS, _str);
+#ifdef CORE_NTP
+        bool b_NTP = p_NTP_settings.del_p_s(force);
         print_free_up_NTP(b_NTP, _str);
-        return b_NET & b_SYS & b_NTP;
+#endif
+        return b_NET & b_SYS
+#ifdef CORE_NTP
+               & b_NTP
+#endif
+            ;
     };
 };
 
@@ -418,16 +434,23 @@ class c_all_settings_rom
 public:
     c_unit_settings_rom<s_ethernet_settings_ROM, addr_ethernet_settings_ROM> p_NET_settings;
     c_unit_settings_rom<s_sys_settings_ROM, addr_sys_settings_ROM> p_SYS_settings;
+#ifdef CORE_NTP
     c_unit_settings_rom<s_NTP_settings_ROM, addr_NTP_settings_ROM> p_NTP_settings;
-
+#endif
     bool is_all_del(bool force = false)
     {
         // bool ret = false;
         bool b_NET = p_NET_settings.del_p_s(force);
         bool b_SYS = p_SYS_settings.del_p_s(force);
+#ifdef CORE_NTP
         bool b_NTP = p_NTP_settings.del_p_s(force);
+#endif
         // const char* _str = "ROM";
-        bool ret = b_NET | b_SYS | b_NTP;
+        bool ret = b_NET | b_SYS
+#ifdef CORE_NTP
+                   | b_NTP
+#endif
+            ;
         if (ret)
         {
             rsdebugInfF("ROM: Очищаем память");
@@ -444,20 +467,27 @@ public:
 
     c_unit_settings_ram<s_ethernet_settings_ROM, addr_ethernet_settings_ROM> p_NET_settings;
     c_unit_settings_ram<s_sys_settings_ROM, addr_sys_settings_ROM> p_SYS_settings;
+#ifdef CORE_NTP
     c_unit_settings_ram<s_NTP_settings_ROM, addr_NTP_settings_ROM> p_NTP_settings;
-
+#endif
     bool is_all_del(bool force = false)
     {
         // bool ret = false;
-        bool b_NET = p_NET_settings.del_p_s(force);
-        bool b_SYS = p_SYS_settings.del_p_s(force);
-        bool b_NTP = p_NTP_settings.del_p_s(force);
         // const char* _str = "RAM";
         String _str = F("RAM");
+        bool b_NET = p_NET_settings.del_p_s(force);
         print_free_up_net(b_NET, _str);
+        bool b_SYS = p_SYS_settings.del_p_s(force);
         print_free_up_sys(b_SYS, _str);
+#ifdef CORE_NTP
+        bool b_NTP = p_NTP_settings.del_p_s(force);
         print_free_up_NTP(b_NTP, _str);
-        return b_NET & b_SYS & b_NTP;
+#endif
+        return b_NET & b_SYS
+#ifdef CORE_NTP
+               & b_NTP
+#endif
+            ;
     };
 };
 

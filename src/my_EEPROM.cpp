@@ -16,10 +16,10 @@ uint16_t CRC16(void *pData, uint16_t nCount)
     {
         tmp = *s;
         Ind = ((CRC ^ tmp) & 0xf);
-        CRC = ((CRC >> 4) & 0xfff) ^ pgm_read_word_aligned(crc_tabl + Ind);
+        CRC = ((CRC >> 4) & 0xfff) ^ pgm_read_word/*_aligned*/(crc_tabl + Ind);
         tmp >>= 4;
         Ind = ((CRC ^ tmp) & 0xf);
-        CRC = ((CRC >> 4) & 0xfff) ^ pgm_read_word_aligned(crc_tabl + Ind);
+        CRC = ((CRC >> 4) & 0xfff) ^ pgm_read_word/*_aligned*/(crc_tabl + Ind);
     }
     return (CRC);
 }
@@ -189,7 +189,9 @@ void NotSaveEmptyMemorySettings(void)
     EmptyMemorySettingsNTP(true);
     // EmptyMemorySettingsNTC(true);
 }
+
 #elif defined(EEPROM_CPP)
+
 uint32_t g_last_request_EEPROM;
 c_all_settings_def def_data;
 c_all_settings_rom rom_data;
@@ -209,8 +211,10 @@ bool SaveAllSettings(void)
             memcpy(&_p_all_settings_ROM->sys_settings_ROM, ram_data.p_SYS_settings(), len_sys_settings_ROM);
             rsdebugDnflnF("Сохраняем данные ethernet");
             memcpy(&_p_all_settings_ROM->ethernet_settings_ROM, ram_data.p_NET_settings(), len_ethernet_settings_ROM);
+#ifdef CORE_NTP
             rsdebugDnflnF("Сохраняем данные NTP");
             memcpy(&_p_all_settings_ROM->NTP_settings_ROM, ram_data.p_NTP_settings(), len_NTP_settings_ROM);
+#endif
             calcCRC(_p_all_settings_ROM, len_all_settings_ROM); // вычисляем CRC
             EEPROM.getDataPtr();                                // установить флаг "данные изменились" для сохранения при EEPROM.end()
             ram_data.unsaved = false;
@@ -247,6 +251,7 @@ void print_free_up_sys(bool _flag, String _pre_str)
     }
 };
 
+#ifdef CORE_NTP
 void print_free_up_NTP(bool _flag, String _pre_str)
 {
     if (_flag)
@@ -256,6 +261,7 @@ void print_free_up_NTP(bool _flag, String _pre_str)
         rsdebugInfln("$%d", len_NTP_settings_ROM);
     }
 };
+#endif
 
 #endif
 

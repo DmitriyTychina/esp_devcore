@@ -28,7 +28,9 @@ extern uTask ut_sysmon;
 extern uTask ut_debuglog;
 extern uTask ut_emptymemory;
 extern uTask ut_OTA;
+#ifdef CORE_NTP
 extern uTask ut_NTP;
+#endif
 extern uTask ut_MQTT;
 
 #ifdef USER_AREA

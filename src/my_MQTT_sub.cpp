@@ -48,7 +48,9 @@ const s_SubscribeElement _arr_SubscribeElement[] = {
     {{d_main_topic, d_system, d_rom, d_empty, d_empty, d_empty}, vc_Save, 0, &cb_MQTT_com_Save},
     {{d_main_topic, d_net, d_wifi, d_settings, d_empty, d_empty}, v_all, 0, &cb_MQTT_com_set_WiFi},
     {{d_main_topic, d_net, d_mqtt, d_settings, d_empty, d_empty}, v_all, 0, &cb_MQTT_com_set_MQTT},
+#ifdef CORE_NTP
     {{d_main_topic, d_net, d_ntp, d_settings, d_empty, d_empty}, v_all, 0, &cb_MQTT_com_set_NTP},
+#endif
     {{d_main_topic, d_net, d_ota, d_settings, d_empty, d_empty}, v_all, 0, &cb_MQTT_com_set_OTA},
     {{d_main_topic, d_net, d_rs_debug, d_settings, d_empty, d_empty}, v_all, 0, &cb_MQTT_com_set_RSDebug},
     {{d_main_topic, d_system, d_sysmon, d_settings, d_empty, d_empty}, v_all, 0, &cb_MQTT_com_set_SysMon},
@@ -151,7 +153,7 @@ void onMessageReceived(char *topic, char *payload, AsyncMqttClientMessagePropert
 
 void MQTT_sub_All()
 {
-    for (uint8 i = 0; i < (sizeof(_arr_SubscribeElement) / sizeof(_arr_SubscribeElement[0])); i++)
+    for (uint8_t i = 0; i < (sizeof(_arr_SubscribeElement) / sizeof(_arr_SubscribeElement[0])); i++)
     {
         mqtt_subscribe(_arr_SubscribeElement[i]);
     }
@@ -468,6 +470,7 @@ void cb_MQTT_com_set_MQTT(s_element_MQTT _element)
     mqtt_publish_save_settings();
 }
 
+#ifdef CORE_NTP
 void cb_MQTT_com_set_NTP(s_element_MQTT _element)
 {
     char arr_dirs[MQTT_MAX_LEVEL][MQTT_MAX_SYMBOLS]; // [уровней][символов]
@@ -586,6 +589,7 @@ void cb_MQTT_com_set_NTP(s_element_MQTT _element)
         return;
     mqtt_publish_save_settings();
 }
+#endif
 
 void cb_MQTT_com_set_OTA(s_element_MQTT _element)
 {
@@ -958,7 +962,7 @@ uint8_t Modify_num(o_IDDirTopic *_dir_topic, e_IDVarTopic _IDVarTopic, const cha
     }
     else
     {
-        mqtt_publish(_dir_topic, _IDVarTopic, *_mem_num);
+        mqtt_publish(_dir_topic, _IDVarTopic, (uint32_t)*_mem_num);
     }
     if (*_mem_num != _real_val)
         ret |= 2;
@@ -979,7 +983,7 @@ uint8_t Modify_num(o_IDDirTopic *_dir_topic, e_IDVarTopic _IDVarTopic, const cha
     }
     else
     {
-        mqtt_publish(_dir_topic, _IDVarTopic, *_mem_num);
+        mqtt_publish(_dir_topic, _IDVarTopic, (int32_t)*_mem_num);
     }
     if (*_mem_num != _real_val)
         ret |= 2;
@@ -1000,7 +1004,7 @@ uint8_t Modify_num(o_IDDirTopic *_dir_topic, e_IDVarTopic _IDVarTopic, const cha
     }
     else
     {
-        mqtt_publish(_dir_topic, _IDVarTopic, *_mem_num);
+        mqtt_publish(_dir_topic, _IDVarTopic, (uint32_t)*_mem_num);
     }
     if (*_mem_num != _real_val)
         ret |= 2;
