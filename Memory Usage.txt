@@ -33,3 +33,4 @@ Flash: [====      ]  35.8% (used 373576 bytes from 1044464 bytes)
 #6 реорганизация дерева значений MQTT + много чего в MQTT
 RAM:   [====      ]  41.5% (used 33972 bytes from 81920 bytes)
 Flash: [====      ]  36.0% (used 376180 bytes from 1044464 bytes)
+#7 add env:esp32-c3-devkitm-1 and modify code (-NTP - no finish)
