@@ -166,19 +166,22 @@ void MQTT_pub_Info_NTP(String _str = "")
 }
 #endif
 
-void MQTT_pub_SysInfo(uint32_t _FreeRAM, uint32_t _RAMFragmentation, uint32_t _MaxFreeBlockSize, float _CPUload, float _CPUCore)
+void MQTT_pub_SysInfo(s_Info_t *_info)
 {
   e_IDDirTopic dirs_topic[] = {d_main_topic, d_system, d_sysmon}; // ok
   o_IDDirTopic o_dirs_topic = {dirs_topic, (uint32_t)(sizeof(dirs_topic) / sizeof(dirs_topic[0]))};
-  mqtt_publish(&o_dirs_topic, v_current_wifi_rssi, (int32_t)WiFi.RSSI());
+  mqtt_publish(&o_dirs_topic, v_current_wifi_rssi, (int32_t)_info->WiFiRSSI);
   // o_dirs_topic._IDDirTopic[1] = d_system;
   // o_dirs_topic._IDDirTopic[2] = d_ram;
-  mqtt_publish(&o_dirs_topic, v_free_ram, _FreeRAM);
-  mqtt_publish(&o_dirs_topic, v_ram_fragm, _RAMFragmentation);
-  mqtt_publish(&o_dirs_topic, v_ram_max_free_block, _MaxFreeBlockSize);
+  mqtt_publish(&o_dirs_topic, v_free_ram, _info->FreeRAM);
+#if defined(ESP32)
+#elif defined(ESP8266)
+  mqtt_publish(&o_dirs_topic, v_ram_fragm, _info->RAMFragmentation);
+  mqtt_publish(&o_dirs_topic, v_ram_max_free_block, _info->MaxFreeBlockSize);
+#endif
   // o_dirs_topic._IDDirTopic[2] = d_chip_esp;
-  mqtt_publish(&o_dirs_topic, v_cpu_load_work, _CPUload, "%.3f");
-  mqtt_publish(&o_dirs_topic, v_cpu_load_core, _CPUCore, "%.3f");
+  mqtt_publish(&o_dirs_topic, v_cpu_load_work, _info->CPUload, "%.3f");
+  mqtt_publish(&o_dirs_topic, v_cpu_load_core, _info->CPUCore, "%.3f");
   // e_IDDirTopic dirs_topic[] = {d_main_topic, d_net, d_wifi, d_empty, d_empty, d_empty};
   // o_IDDirTopic o_dirs_topic = {dirs_topic, (uint32_t)(sizeof(dirs_topic) / sizeof(dirs_topic[0]))};
   // mqtt_publish(&o_dirs_topic, v_current_wifi_rssi, WiFi.RSSI());

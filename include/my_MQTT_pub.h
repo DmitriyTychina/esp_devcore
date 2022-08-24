@@ -10,7 +10,7 @@ void MQTT_pub_allSettings(e_settings_from from);
 #ifdef CORE_NTP
 void MQTT_pub_Info_NTP(String _str);
 #endif
-void MQTT_pub_SysInfo(uint32_t _FreeRAM, uint32_t _RAMFragmentation, uint32_t _MaxFreeBlockSize, float _CPUload, float _CPUCore);
+void MQTT_pub_SysInfo(s_Info_t *_info);
 void MQTT_pub_allInfo(bool _all);
 
 // void onMessagePublish(uint16_t packetId);

@@ -2,7 +2,6 @@
 
 #include "global_def.h"
 
-// #define CORE_NTP
 
 
 // #define OTA_NAME "ESP-0000" // Имя сетевого порта для удаленной прошивки
@@ -22,7 +21,7 @@
 // #define T_alg_main_MS 500L  // Период обработки основных алгоритмов по таймеру
 
 #define doorlatch_pin 4
-#define statedoor_pin 0 // 5
+#define statedoor_pin 5
 
 /* --------------------------------
 01--rst--

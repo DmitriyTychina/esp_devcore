@@ -1,0 +1,82 @@
+// Опрашивает ТВ-ресивер VU+solo2 по API
+// Создает структуру в javascript.0.0.Multimedia.receiver_api
+// нужен запущенный скрипт run_ping
+// нужен 'javascript.0.0.Connections.Ping.VU.ping'
+
+var stop_script = false;
+
+let root_path = 'javascript.0.0.Multimedia.receiver_api.';
+let tick_period = 10;
+ModifyCreateIDIfNot(root_path + 'tick_period', { "name": "Период проверки, с", "type": "number", "def": 10 }, tick_period);
+setTimeout(function tick() {                                 // цикл проверки
+    // console.log('tick!');
+
+    // function conn_colorFunc(name, state) {
+    //     if (state) {
+    //         ModifyCreateIDIfNot(root_path + name + '.color', { "name": "Цвет состояния", "type": "string" }, "lime");
+    //         ModifyCreateIDIfNot(root_path + name + '.connected', { "name": "Подключен", "type": "boolean" }, true);
+    //     } else {
+    //         ModifyCreateIDIfNot(root_path + name + '.color', { "name": "Цвет состояния", "type": "string" }, "red");
+    //         ModifyCreateIDIfNot(root_path + name + '.connected', { "name": "Подключен", "type": "boolean" }, false);
+    //     }
+    // }
+    let tempdata;
+    // console.log('VU.ping: ' + getState('javascript.0.0.Connections.Ping.VU.ping').val);
+    if (getState('javascript.0.0.Connections.Ping.VU.ping').val == true) {
+        request.get('http://192.168.1.5/api/statusinfo?')
+            .on('data', function (data) {
+                // console.log('data: ' + data);
+                if (data[0] === 123 || data[0] === '{') { // '{'
+                    tempdata = data;
+                } else {
+                    tempdata += data;
+                }
+                // console.log('tempdata: ' + tempdata[tempdata.length-1]);
+                if (tempdata[tempdata.length - 1] === 125 || tempdata[tempdata.length - 1] === '}') { // '}'
+                    // console.log('tempdata: ' + tempdata);
+                    let json = JSON.parse(tempdata);
+                    let now = new Date();
+                    // console.log('inStandby: ' + json.inStandby);
+                    if (json.inStandby == "false") {
+                        ModifyCreateIDIfNot(root_path + 'on', { "name": "on", "type": "boolean" }, true);
+                        ModifyCreateIDIfNot(root_path + 'currservice_station', { "name": "currservice_station", "type": "string" }, json.currservice_station);
+                        ModifyCreateIDIfNot(root_path + 'currservice_serviceref', { "name": "currservice_serviceref", "type": "string" }, json.currservice_serviceref);
+                        ModifyCreateIDIfNot(root_path + 'time', { "name": "time", "type": "string" }, formatDate(now, "JJJJ.MM.TT SS:mm:ss"));
+                        let time_now = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+                        let time_begin = getDateObject(json.currservice_begin).getHours() * 3600 + getDateObject(json.currservice_begin).getMinutes() * 60;
+                        let time_end = getDateObject(json.currservice_end).getHours() * 3600 + getDateObject(json.currservice_end).getMinutes() * 60;
+                        if(time_end < time_begin) {
+                            time_end = time_end + 86400;
+                            if(time_now < time_begin) {time_now = time_now + 86400;}
+}
+                        ModifyCreateIDIfNot(root_path + 'time_now', { "name": "time", "type": "number" }, time_now);
+                        ModifyCreateIDIfNot(root_path + 'time_begin', { "name": "time_begin", "type": "number" }, time_begin);
+                        ModifyCreateIDIfNot(root_path + 'time_end', { "name": "time_end", "type": "number" }, time_end);
+                        ModifyCreateIDIfNot(root_path + 'currservice_begin', { "name": "currservice_begin", "type": "string" }, json.currservice_begin);
+                        ModifyCreateIDIfNot(root_path + 'currservice_end', { "name": "currservice_end", "type": "string" }, json.currservice_end);
+                        ModifyCreateIDIfNot(root_path + 'muted', { "name": "muted", "type": "boolean" }, json.muted);
+                        ModifyCreateIDIfNot(root_path + 'isRecording', { "name": "isRecording", "type": "string" }, json.isRecording);
+                        ModifyCreateIDIfNot(root_path + 'volume', { "name": "volume", "type": "number" }, json.volume);
+                        ModifyCreateIDIfNot(root_path + 'currservice_name', { "name": "currservice_name", "type": "string" }, json.currservice_name);
+                        ModifyCreateIDIfNot(root_path + 'currservice_description', { "name": "currservice_description", "type": "string" }, json.currservice_description);
+                    } else {
+                        ModifyCreateIDIfNot(root_path + 'on', { "name": "on", "type": "boolean" }, false, null, false);
+                    }
+                    // conn_colorFunc(json[t].comment, true);
+                }
+            })
+            .on('error', function (err) {
+                console.error(err);
+            });
+    }
+    if (!stop_script) {
+        setTimeout(tick, tick_period * 1000); // рекурсивный setTimeout
+    }
+}, (getState(root_path + 'tick_period').val) * 300);
+
+onStop(function () {
+    stop_script = true;
+    log('Скрипт ' + name + ' остановлен!', "warn");
+});
+
+

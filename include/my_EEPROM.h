@@ -222,9 +222,9 @@ extern u_NeedSaveSettings NeedSaveSettings;
 
 #elif defined(EEPROM_CPP)
 
-#define LoadInMemorySettingsSys()
-#define LoadInMemorySettingsEthernet()
-#define LoadInMemorySettingsNTP()
+// #define LoadInMemorySettingsSys()
+// #define LoadInMemorySettingsEthernet()
+// #define LoadInMemorySettingsNTP()
 
 template <typename T>
 class c_settings_base // шаблон

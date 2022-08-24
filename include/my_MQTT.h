@@ -230,9 +230,9 @@ const char ArrVarTopic[_LastElement_e_IDVarTopic][MQTT_MAX_SYMBOLS] /* PROGMEM *
         // MQTT
         "USER",
         // Info
-        "CurrentSSID",
-        "CurrentRSSI",
-        "CurrentIP",
+        "SSID",
+        "RSSI",
+        "MyIP",
         "ReasonReset",
         "TimeReset",
         "CntReconnMQTT",

@@ -97,7 +97,7 @@ void init_WiFi()
     WiFi.disconnect(); // - должно произойти событие?! - не происходит!
     wifi_count_conn = 0;
 #if defined(ESP8266)
-    if (WiFi.getgetPersistent())
+    if (WiFi.getPersistent())
 #endif
         WiFi.persistent(false); // чтоб не записывать во flash(и не протирать) параметры WiFi при WiFi.begin
     if (WiFi.getAutoConnect())
@@ -205,7 +205,10 @@ void cb_ut_state_wifi(void)
             }
             for (i = 0; i < n; i++) // ищем наши
             {
+#if defined(EEPROM_C)
                 LoadInMemorySettingsEthernet();
+#elif defined(EEPROM_CPP)
+#endif
                 uint8_t _idx = get_idx_eth(WiFi.SSID(i));
                 if (_idx)
                 {

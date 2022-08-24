@@ -26,7 +26,10 @@ uint16_t mqtt_count_conn = 0; // количество (пере)подключе
 
 uint8_t mqtt_init(void)
 {
+#if defined(EEPROM_C)
   LoadInMemorySettingsEthernet();
+#elif defined(EEPROM_CPP)
+#endif
   // rsdebugInflnF("---MQTTinit");
   uint8_t _idx = get_idx_eth(WiFi.SSID());
   if (_idx)
@@ -79,7 +82,10 @@ void cb_ut_MQTT()
       }
       else if (MQTT_state == _MQTT_disconnected)
       {
+#if defined(EEPROM_C)
         LoadInMemorySettingsEthernet();
+#elif defined(EEPROM_CPP)
+#endif
         uint8_t _idx = mqtt_init();
         if (_idx)
         {
@@ -216,8 +222,8 @@ void MQTTconnected(void)
 void onMqttConnect(bool sessionPresent)
 {
   // rsdebugDnfln("onMqttConnect[%d]", (uint8_t)sessionPresent);
-  LoadInMemorySettingsEthernet();
 #if defined(EEPROM_C)
+  LoadInMemorySettingsEthernet();
   ut_MQTT.setInterval(g_p_ethernet_settings_ROM->MQTT_Ttask);
 #elif defined(EEPROM_CPP)
   ut_MQTT.setInterval(ram_data.p_NET_settings()->MQTT_Ttask);

@@ -31,19 +31,24 @@ void SysMon_Init(void)
 
 void cb_ut_sysmon(void)
 {
-  uint32_t FreeRAM, RAMFragmentation, MaxFreeBlockSize;
-  unsigned long cpuTot;
-  float CPUload, CPUCore, CPUidle;
+  // uint32_t FreeRAM, RAMFragmentation, MaxFreeBlockSize;
+  // unsigned long cpuTot;
+  // float CPUload, CPUCore, CPUidle;
+  s_Info_t s_Info;
 
   if (v_b_SysMon_info_to_mqtt || v_b_SysMon_info_to_rsdebug)
   {
-    FreeRAM = ESP.getFreeHeap();
-    // RAMFragmentation = ESP.getHeapFragmentation();
-    // MaxFreeBlockSize = ESP.getMaxFreeBlockSize();
-    cpuTot = ut_sysmon.getCpuLoadTotal();
-    CPUload = (float)ut_sysmon.getCpuLoadCycle() / (float)cpuTot * 100;
-    CPUCore = (float)ut_sysmon.getCpuLoadCore() / (float)cpuTot * 100;
-    CPUidle = 100 - CPUload - CPUCore;
+    s_Info.WiFiRSSI = WiFi.RSSI();
+    s_Info.FreeRAM = ESP.getFreeHeap();
+#if defined(ESP32)
+#elif defined(ESP8266)
+    s_Info.RAMFragmentation = ESP.getHeapFragmentation();
+    s_Info.MaxFreeBlockSize = ESP.getMaxFreeBlockSize();
+#endif
+    s_Info.cpuTot = ut_sysmon.getCpuLoadTotal();
+    s_Info.CPUload = (float)ut_sysmon.getCpuLoadCycle() / (float)s_Info.cpuTot * 100;
+    s_Info.CPUCore = (float)ut_sysmon.getCpuLoadCore() / (float)s_Info.cpuTot * 100;
+    s_Info.CPUidle = 100 - s_Info.CPUload - s_Info.CPUCore;
   }
   if (v_b_SysMon_info_to_rsdebug)
   {
@@ -51,15 +56,18 @@ void cb_ut_sysmon(void)
     rsdebugInfln("***********************************************");
     // rsdebugInfln("CPU cpuTot %u of time.", cpuTot);
     if (wifi_state == _wifi_connected)
-      rsdebugInfln("WiFi.RSSI: %d", WiFi.RSSI());
-    rsdebugInfln("FreeRAM: %d", FreeRAM);
-    rsdebugInfln("RAMFragmentation: %d", RAMFragmentation); //*
-    rsdebugInfln("MaxFreeBlockSize: %d", MaxFreeBlockSize); //*
-    rsdebugInfln("CPUload core %.3f %%", CPUCore);
-    rsdebugInfln("CPUload work %.3f %%", CPUload);
-    rsdebugInfln("CPUload sleep %.3f %%", CPUidle);
+      rsdebugInfln("WiFi.RSSI: %d", s_Info.WiFiRSSI);
+    rsdebugInfln("FreeRAM: %d", s_Info.FreeRAM);
+#if defined(ESP32)
+#elif defined(ESP8266)
+    rsdebugInfln("RAMFragmentation: %d", s_Info.RAMFragmentation); //*
+    rsdebugInfln("MaxFreeBlockSize: %d", s_Info.MaxFreeBlockSize); //*
+#endif
+    rsdebugInfln("CPUload core %.3f %%", s_Info.CPUCore);
+    rsdebugInfln("CPUload work %.3f %%", s_Info.CPUload);
+    rsdebugInfln("CPUload sleep %.3f %%", s_Info.CPUidle);
   }
   if (v_b_SysMon_info_to_mqtt)
-    MQTT_pub_SysInfo(FreeRAM, RAMFragmentation, MaxFreeBlockSize, CPUload, CPUCore);
+    MQTT_pub_SysInfo(&s_Info);
   // ut_sysmon.cpuLoadReset(); // здесь не надо !!!
 }

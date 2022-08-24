@@ -24,8 +24,8 @@ void init_sdebuglog(bool force)
         Debug.setSdebugEnabled(true); // if you wants Serial1 echo - only recommended if ESP is plugged in USB
     else
     {
-        LoadInMemorySettingsSys();
 #if defined(EEPROM_C)
+        LoadInMemorySettingsSys();
         Debug.setSdebugEnabled(g_p_sys_settings_ROM->RSDebug_SDebug);
 #elif defined(EEPROM_CPP)
         // rsdebugInfln("----RSdebug init: %s", ram_data.p_SYS_settings()->RSDebug_SDebug ? "1" : "0");

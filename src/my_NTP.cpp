@@ -1,7 +1,11 @@
 #ifdef CORE_NTP
 #include <Arduino.h>
 #include <TimeLib.h>
-#include <WiFiUdp.h>
+#if defined(ESP8266)
+#include <ESP8266WiFi.h>
+#elif defined(ESP32)
+#include <WiFi.h>
+#endif
 
 #include "my_scheduler.h"
 #include "my_NTP.h"
@@ -29,7 +33,10 @@ void processSyncEvent(NTPSyncEvent_t _ntpEvent)
 	String _str = F("no");
 	if (_ntpEvent < 0)
 	{
+#if defined(EEPROM_C)
 		LoadInMemorySettingsNTP();
+#elif defined(EEPROM_CPP)
+#endif
 		if (++cnt_errorNTP > qnt_errorNTP)
 		{
 			cnt_errorNTP = 1;
@@ -102,23 +109,28 @@ void init_NTP(void)
 void init_NTP_with_WiFi(void)
 {
 	rsdebugInflnF("---StartNTP");
-	LoadInMemorySettingsNTP();
-
 	// rsdebugDln("PeriodSyncNTP: %d", g_p_NTP_settings_ROM->PeriodSyncNTP);
 	// rsdebugDln("timezone: %d", g_p_NTP_settings_ROM->timezone);
 	// rsdebugDln("serversNTP[%d]: %s", NumServerNTP, g_p_NTP_settings_ROM->serversNTP[NumServerNTP]);
+	rsdebugInflnF("#1");
 
 	NTP.setNTPTimeout(NTP_TIMEOUT); // в миллисекундах таймаут ответа сервера NTP
 #if defined(EEPROM_C)
+	LoadInMemorySettingsNTP();
 	NTP.setInterval(60 * g_p_NTP_settings_ROM->PeriodSyncNTP); // период синхронизации в секундах - у нас в минутах
 	NTP.begin(g_p_NTP_settings_ROM->serversNTP[NumServerNTP], g_p_NTP_settings_ROM->timezone, false /*переход на летнее/зимнее*/, minutesTimeZone);
 	ut_NTP.setInterval(g_p_NTP_settings_ROM->Ttask);
 #elif defined(EEPROM_CPP)
+	rsdebugInflnF("#2");
 	NTP.setInterval(60 * ram_data.p_NTP_settings()->PeriodSyncNTP); // период синхронизации в секундах - у нас в минутах
+	rsdebugInflnF("#3");
 	NTP.begin(ram_data.p_NTP_settings()->serversNTP[NumServerNTP], ram_data.p_NTP_settings()->timezone, false /*переход на летнее/зимнее*/, minutesTimeZone);
+	rsdebugInflnF("#4");
 	ut_NTP.setInterval(ram_data.p_NTP_settings()->Ttask);
 #endif
+	rsdebugInflnF("#5");
 	ut_NTP.enable();
+	rsdebugInflnF("#6");
 }
 
 void cb_ut_NTP(void)
